@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SethPOS</string>
+    <string name="app_id">1:983948650970:android:4a6798adcf963e139938e3</string>
+
+    <!-- 💬 เพิ่มใหม่ -->
+    <string name="toolbar_comment_title">ความคิดเห็น</string>
+    <string name="hint_comment">แสดงความคิดเห็น...</string>
+    <string name="button_post">โพสต์</string>
+
+    <!-- Cart and Order -->
+    <string name="cart_empty">ไม่มีสินค้าในตะกร้า</string>
+    <string name="order_eat_here">กินที่ร้าน</string>
+    <string name="order_delivery">ส่ง</string>
+    <string name="order_pickup">มารับเอง</string>
+    <string name="note_hint">หมายเหตุเพิ่มเติม (ถ้ามี)</string>
+    <string name="total_price_default">รวมทั้งหมด: ฿0.00</string>
+    <string name="total_price">รวมทั้งหมด: ฿%.2f</string>
+    <string name="checkout">ชำระเงิน</string>
+    <string name="price_format">฿%.2f</string>
+    <string name="store_category_format">หมวดหมู่: %1$s</string>
+
+    <!-- Authentication -->
+    <string name="logo_text">MySeth</string>
+    <string name="signup_title">สมัครสมาชิก</string>
+    <string name="email_hint">อีเมล</string>
+    <string name="password_hint">รหัสผ่าน</string>
+    <string name="merchant_role">ร้านค้า</string>
+    <string name="customer_role">ลูกค้า</string>
+    <string name="merchant_name_hint">ชื่อร้านค้า (สำหรับร้านค้า)</string>
+    <string name="register_button">สมัครสมาชิก</string>
+    <string name="already_member">เป็นสมาชิกอยู่แล้ว?</string>
+    <string name="login_text">เข้าสู่ระบบ</string>
+    <string name="login_text_desc">ลิงก์เข้าสู่ระบบ</string>
+    <string name="register_button_desc">ปุ่มสมัครสมาชิก</string>
+    <string name="email_autofill_hint">emailAddress</string>
+    <string name="password_autofill_hint">password</string>
+    <string name="login_button">เข้าสู่ระบบ</string>
+    <string name="forgot_password">ลืมรหัสผ่าน?</string>
+    <string name="no_account">ยังไม่มีบัญชี?</string>
+    <string name="signup_link">สมัครสมาชิก</string>
+    <string name="login_title">เข้าสู่ระบบ</string>
+
+    <!-- Post Creation -->
+    <string name="hint_post_content">เขียนอะไรบางอย่าง...</string>
+    <string name="add_image">เพิ่มรูปภาพ</string>
+    <string name="post">โพสต์</string>
+    <string name="preview_image">รูปภาพตัวอย่างก่อนโพสต์</string>
+    <string name="add_new_post">เพิ่มโพสต์ใหม่</string>
+    <string name="create_post_hint">คุณคิดอะไรอยู่?</string>
+    <string name="add_photo">เพิ่มรูปภาพ</string>
+
+    <!-- Feed -->
+    <string name="feed_create_post">สร้างโพสต์</string>
+    <string name="feed_username">ชื่อผู้ใช้</string>
+    <string name="feed_user_status">สถานะ</string>
+    <string name="feed_filter_all">ทั้งหมด</string>
+    <string name="feed_filter_photos">รูปภาพ</string>
+    <string name="feed_filter_videos">วิดีโอ</string>
+    <string name="feed_filter_articles">บทความ</string>
+    <string name="feed_profile_image_description">รูปโปรไฟล์ของคุณ</string>
+    <string name="feed_empty">ยังไม่มีโพสต์ในฟีด</string>
+    <string name="feed_loading">กำลังโหลดโพสต์...</string>
+
+    <!-- Post Actions -->
+    <string name="post_like">ถูกใจ</string>
+    <string name="post_comment">ความคิดเห็น</string>
+    <string name="post_share">แชร์</string>
+    <string name="post_more">เพิ่มเติม</string>
+    <string name="post_send">ส่ง</string>
+    <string name="post_comment_hint">เขียนความคิดเห็น...</string>
+    <string name="post_like_count">ถูกใจ %1$d</string>
+    <string name="post_comment_count">ดูความคิดเห็นทั้งหมด %1$d รายการ</string>
+    <string name="post_content">เนื้อหาโพสต์</string>
+    <string name="post_username">ชื่อผู้ใช้</string>
+    <string name="post_user_image_description">รูปโปรไฟล์ผู้ใช้</string>
+    <string name="post_image_description">รูปภาพโพสต์</string>
+    <string name="post_current_user_image_description">รูปโปรไฟล์ของคุณ</string>
+    <string name="post_time_format">%1$s ที่แล้ว</string>
+
+    <!-- Navigation -->
+    <string name="bottom_nav_home">หน้าหลัก</string>
+    <string name="bottom_nav_profile">โปรไฟล์</string>
+    <string name="notifications">การแจ้งเตือน</string>
+    <string name="more_options">ตัวเลือกเพิ่มเติม</string>
+    <string name="nav_checkin">เช็คอิน</string>
+    <string name="nav_checkin_description">ปุ่มเช็คอิน</string>
+    <string name="nav_profile_description">ปุ่มโปรไฟล์</string>
+
+    <!-- Post Interaction -->
+    <string name="post_like_button_description">ปุ่มถูกใจ</string>
+    <string name="post_comment_button_description">ปุ่มแสดงความคิดเห็น</string>
+    <string name="post_share_button_description">ปุ่มแชร์</string>
+    <string name="post_boost_button_description">ปุ่มบูสต์โพสต์</string>
+    <string name="post_boost">บูสต์</string>
+    <string name="post_boost_count">บูสต์ %1$d</string>
+    <string name="post_boost_success">บูสต์โพสต์สำเร็จ</string>
+    <string name="post_boost_cancel">ยกเลิกการบูสต์โพสต์</string>
+    <string name="post_boost_confirm">คุณต้องการบูสต์โพสต์นี้ใช่หรือไม่?</string>
+    <string name="post_boost_cancel_confirm">คุณต้องการยกเลิกการบูสต์โพสต์นี้ใช่หรือไม่?</string>
+    <string name="like_label">ถูกใจ</string>
+    <string name="comment_label">แสดงความคิดเห็น</string>
+
+    <!-- Post Options -->
+    <string name="report_post">รายงานโพสต์</string>
+    <string name="block_user">บล็อกผู้ใช้</string>
+    <string name="edit_post">แก้ไขโพสต์</string>
+    <string name="delete_post">ลบโพสต์</string>
+    <string name="save_button_label">บันทึก</string>
+
+    <!-- Story -->
+    <string name="story_preview">Story preview</string>
+    <string name="user_avatar_1">User avatar 1</string>
+    <string name="user_avatar_2">User avatar 2</string>
+
+    <!-- Check-in -->
+    <string name="checked_in_today">เช็คอินแล้ววันนี้</string>
+    <string name="not_checked_in_today">ยังไม่ได้เช็คอินวันนี้</string>
+    <string name="check_in_time">เวลาเช็คอิน: %1$s</string>
+    <string name="last_check_in_time">เวลาเช็คอินล่าสุด: %1$s</string>
+    <string name="total_check_ins">เช็คอินทั้งหมด: %1$d ครั้ง</string>
+    <string name="streak_days">%1$d วันติดต่อกัน</string>
+    <string name="rewards_inventory">คลังรางวัล</string>
+
+    <!-- Notifications -->
+    <string name="notification_new">การแจ้งเตือนใหม่</string>
+    <string name="notification_liked_your_post">%1$s ถูกใจโพสต์ของคุณ</string>
+    <string name="notification_commented_on_your_post">%1$s แสดงความคิดเห็นในโพสต์ของคุณ</string>
+    <string name="notification_started_following_you">%1$s เริ่มติดตามคุณ</string>
+    <string name="notification_mark_all_read">ทำเครื่องหมายว่าอ่านแล้วทั้งหมด</string>
+    <string name="notification_clear_all">ลบการแจ้งเตือนทั้งหมด</string>
+    <string name="notification_clear_all_confirmation">คุณต้องการลบการแจ้งเตือนทั้งหมดใช่หรือไม่?</string>
+    <string name="notification_clear_all_success">ลบการแจ้งเตือนทั้งหมดแล้ว</string>
+    <string name="notification_error">เกิดข้อผิดพลาด</string>
+    <string name="notification_opening_post">กำลังเปิดโพสต์...</string>
+    <string name="notification_opening_profile">กำลังเปิดโปรไฟล์ผู้ใช้...</string>
+
+    <!-- Premium Subscription -->
+    <string name="premium_icon">Premium Icon</string>
+    <string name="upgrade_to_premium">อัปเกรดเป็นพรีเมียม</string>
+    <string name="premium_description">รับสิทธิ์พิเศษมากมาย</string>
+    <string name="premium_features">สิทธิ์พิเศษที่คุณจะได้รับ</string>
+    <string name="feature_icon">Feature Icon</string>
+    <string name="unlimited_posts">โพสต์ไม่จำกัด</string>
+    <string name="unlimited_images">อัปโหลดรูปภาพได้ไม่จำกัด</string>
+    <string name="special_services">บริการพิเศษอื่นๆ อีกมากมาย</string>
+    <string name="choose_plan">เลือกแพ็คเกจที่เหมาะกับคุณ</string>
+    <string name="monthly_plan">รายเดือน</string>
+    <string name="monthly_price">฿69</string>
+    <string name="monthly_period">/เดือน</string>
+    <string name="subscribe_monthly">สมัครสมาชิกรายเดือน</string>
+    <string name="yearly_plan">รายปี</string>
+    <string name="yearly_price">฿690</string>
+    <string name="yearly_period">/ปี</string>
+    <string name="subscribe_yearly">สมัครสมาชิกรายปี</string>
+    <string name="save_20_percent">ประหยัด 20%</string>
+    <string name="save_30">ประหยัด 30%</string>
+    <string name="yearly_price_note">เฉลี่ยเพียง 57.50 บาท/เดือน</string>
+    <string name="secure_icon">Secure Icon</string>
+    <string name="secure_payment">ปลอดภัยด้วย Google Play</string>
+
+    <!-- FCM Notification Channel -->
+    <string name="default_notification_channel_id">fcm_default_channel</string>
+
+    <!-- New string resources for image content descriptions -->
+    <string name="verified_badge_description">Verified badge</string>
+    <string name="crown_icon_description">Premium user crown icon</string>
+    <string name="store_profile">โปรไฟล์ร้านค้า</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="inventory">คลังสินค้า</string>
+    <string name="store_image_description">รูปภาพร้านค้า</string>
+    <string name="sales_chart_description">กราฟยอดขาย</string>
+    <string name="feed_store_name_placeholder">ชื่อร้าน</string>
+    <string name="print_receipt">พิมพ์ใบเสร็จ</string>
+
+    <!-- Printer Settings Activity Strings -->
+    <string name="bluetooth_enable_prompt">กรุณาเปิดใช้งาน Bluetooth</string>
+    <string name="bluetooth_not_supported">อุปกรณ์ไม่รองรับ Bluetooth</string>
+    <string name="no_paired_printers_found">ไม่พบเครื่องพิมพ์ที่เชื่อมต่อ</string>
+    <string name="status_no_usb_bt_printer">สถานะ: ไม่พบเครื่องพิมพ์ USB/Bluetooth</string>
+    <string name="select_printer_title">เลือกเครื่องพิมพ์</string>
+    <string name="cancel_button">ยกเลิก</string>
+    <string name="status_printer_selected">สถานะ: เลือกเครื่องพิมพ์ %1$s แล้ว</string>
+    <string name="network_info_incomplete">กรุณากรอกข้อมูลเครือข่ายให้ครบถ้วน</string>
+    <string name="status_testing_connection">สถานะ: กำลังทดสอบการเชื่อมต่อ...</string>
+    <string name="status_connection_successful">สถานะ: เชื่อมต่อกับ %1$s:%2$s สำเร็จ</string>
+    <string name="test_connection_success_title">ทดสอบการเชื่อมต่อสำเร็จ</string>
+    <string name="test_connection_success_message">สามารถเชื่อมต่อกับเครื่องพิมพ์ได้\n\nกรุณาตรวจสอบกระดาษทดสอบที่พิมพ์ออกมา</string>
+    <string name="ok_button">ตกลง</string>
+    <string name="status_connection_failed">สถานะ: ไม่สามารถเชื่อมต่อกับ %1$s:%2$s ได้</string>
+    <string name="connection_failed_title">ไม่สามารถเชื่อมต่อได้</string>
+    <string name="connection_failed_message">เกิดข้อผิดพลาด: %1$s\n\nกรุณาตรวจสอบ:\n1. IP Address และ Port ถูกต้อง\n2. เครื่องพิมพ์เปิดอยู่\n3. เครื่องพิมพ์เชื่อมต่อกับเครือข่ายเดียวกัน</string>
+    <string name="select_network_ethernet_for_test">กรุณาเลือกประเภทเครื่องพิมพ์เป็น Network หรือ Ethernet เพื่อทดสอบ</string>
+    <string name="settings_saved">บันทึกการตั้งค่าแล้ว</string>
+    <string name="status_select_printer_type">สถานะ: กรุณาเลือกประเภทเครื่องพิมพ์</string>
+    <string name="status_scan_and_select_printer">สถานะ: กรุณาสแกนและเลือกเครื่องพิมพ์</string>
+    <string name="status_test_connection_usb_bt">สถานะ: กรุณาทดสอบการเชื่อมต่อ (USB/Bluetooth)</string>
+    <string name="status_fill_network_info">สถานะ: กรุณากรอกข้อมูลเครือข่ายให้ครบถ้วน</string>
+    <string name="status_test_connection_network_ethernet">สถานะ: กรุณาทดสอบการเชื่อมต่อ (Network/Ethernet)</string>
+    <string name="status_cannot_save">สถานะ: ไม่สามารถบันทึกได้</string>
+    <string name="status_connected_usb">สถานะ: เชื่อมต่อแล้วกับ %1$s</string>
+    <string name="status_connected_network">สถานะ: เชื่อมต่อแล้วกับ %1$s:%2$s (Network)</string>
+    <string name="status_connected_ethernet">สถานะ: เชื่อมต่อแล้วกับ %1$s:%2$s (Ethernet)</string>
+    <string name="bluetooth_permission_denied">ไม่ได้รับอนุญาต Bluetooth</string>
+    <string name="comments">ความคิดเห็น</string>
+    <string name="comment_hint">เขียนความคิดเห็น...</string>
+
+    <!-- New string resources for ad content descriptions -->
+    <string name="image_upload_locked">ต้องเป็นสมาชิก หรือดูโฆษณาเพื่อปลดล็อก</string>
+    <string name="watch_ad_to_unlock">ดูโฆษณาเพื่อปลดล็อก</string>
+    <string name="ad_loading">กำลังโหลดโฆษณา...</string>
+    <string name="ad_failed">ไม่สามารถโหลดโฆษณาได้ กรุณาลองใหม่</string>
+    <string name="ad_rewarded">ขอบคุณที่ดูโฆษณา ตอนนี้คุณสามารถอัปโหลดรูปภาพได้แล้ว</string>
+
+    <!-- Strings for activity_role_selection.xml -->
+    <string name="role_selection_title">เลือกประเภทผู้ใช้งาน</string>
+    <string name="role_selection_subtitle">กรุณาเลือกประเภทผู้ใช้งานที่ต้องการ</string>
+    <string name="role_merchant_title">ร้านค้า</string>
+    <string name="role_merchant_description">สำหรับเจ้าของร้านค้าที่ต้องการจัดการร้านค้า</string>
+    <string name="role_customer_title">ลูกค้า</string>
+    <string name="role_customer_description">สำหรับลูกค้าที่ต้องการใช้งานแอปพลิเคชัน</string>
+    <string name="icon_store_description">ไอคอนร้านค้า</string>
+    <string name="icon_customer_description">ไอคอนลูกค้า</string>
+
+    <!-- Subscription Screen -->
+    <string name="subscription_title">สมัครสมาชิกพรีเมียม</string>
+    <string name="subscription_header">เลือกแพ็คเกจที่เหมาะกับคุณ</string>
+    <string name="subscription_subheader">รับสิทธิประโยชน์มากมาย</string>
+
+    <!-- Monthly Plan -->
+    <string name="subscription_monthly_plan">รายเดือน</string>
+    <string name="subscription_monthly_price">฿69</string>
+    <string name="subscription_monthly_period">/เดือน</string>
+    <string name="subscription_monthly_button">สมัครสมาชิกรายเดือน</string>
+
+    <!-- Yearly Plan -->
+    <string name="subscription_yearly_plan">รายปี</string>
+    <string name="subscription_yearly_price">฿690</string>
+    <string name="subscription_yearly_period">/ปี</string>
+    <string name="subscription_yearly_button">สมัครสมาชิกรายปี</string>
+    <string name="subscription_yearly_save">ประหยัด 17%</string>
+
+    <!-- Benefits -->
+    <string name="subscription_benefits_title">สิทธิประโยชน์ที่คุณจะได้รับ</string>
+    <string name="subscription_benefit_premium">✓ เข้าถึงเนื้อหาพรีเมียมทั้งหมด</string>
+    <string name="subscription_benefit_no_ads">✓ ไม่มีโฆษณา</string>
+    <string name="subscription_benefit_offline">✓ ดาวน์โหลดเนื้อหาเพื่อดูแบบออฟไลน์</string>
+
+    <!-- Subscription Terms -->
+    <string name="subscription_terms">การสมัครสมาชิกจะต่ออายุอัตโนมัติในวันที่กำหนด สามารถยกเลิกได้ทุกเมื่อผ่าน Google Play Store</string>
+    <string name="subscription_price_includes_vat">ราคารวมภาษีมูลค่าเพิ่มแล้ว</string>
+    <string name="subscription_privacy_policy">นโยบายความเป็นส่วนตัว</string>
+    <string name="subscription_terms_of_service">ข้อกำหนดการให้บริการ</string>
+    <string name="subscription_satisfaction_guarantee">รับประกันความพึงพอใจ 7 วัน</string>
+    <string name="subscription_guarantee_icon">ไอคอนการรับประกัน</string>
+    <string name="subscription_secure_payment">การชำระเงินปลอดภัยด้วย Google Play</string>
+    <string name="subscription_secure_icon">ไอคอนความปลอดภัย</string>
+
+    <!-- New string resources for remaining spins -->
+    <string name="remaining_spins">สิทธิ์หมุนวงล้อที่เหลือ: %1$d ครั้ง</string>
+
+    <!-- Wheel of Fortune Rewards -->
+    <string name="reward_info_red">สีแดง: สิทธิ์ในการโพสต์รูป 1 หรือ 2 ครั้ง</string>
+    <string name="reward_info_green">สีเขียว: โพสต์และดูแจ้งเตือนได้ไม่จำกัด 1 วัน</string>
+    <string name="reward_info_other_colors">สีอื่น: ไม่มีรางวัล</string>
+    <string name="reward_post_1_time">สิทธิ์ในการโพสต์รูปได้ 1 ครั้ง</string>
+    <string name="reward_post_2_times">สิทธิ์ในการโพสต์รูปได้ 2 ครั้ง</string>
+    <string name="reward_unlimited_posts_1_day">โพสต์ได้ไม่จำกัด 1 วัน</string>
+    <string name="reward_unlimited_notifications_1_day">ดูแจ้งเตือนได้ไม่จำกัด 1 วัน</string>
+    <string name="no_reward_this_time">เสียใจด้วย ไม่มีรางวัลในครั้งนี้</string>
+
+    <!-- New string resources for paper settings -->
+    <string name="paper_settings">ตั้งค่ากระดาษ</string>
+    <string name="paper_size">ขนาดกระดาษ</string>
+    <string name="paper_width">ความกว้างกระดาษ (มม.)</string>
+    <string name="chars_per_line">จำนวนตัวอักษรต่อบรรทัด</string>
+    <string name="custom_paper_size">กำหนดเอง</string>
+</resources>

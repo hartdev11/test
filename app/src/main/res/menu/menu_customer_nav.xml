@@ -1,0 +1,21 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:title="Home"
+        android:icon="@drawable/ic_home" />
+
+    <item
+        android:id="@+id/nav_stores"
+        android:title="ร้านค้า"
+        android:icon="@drawable/ic_store" />
+
+    <item
+        android:id="@+id/nav_checkin"
+        android:title="เช็คอิน"
+        android:icon="@drawable/ic_checkin" />
+
+    <item
+        android:id="@+id/nav_profile"
+        android:title="โปรไฟล์"
+        android:icon="@drawable/ic_default_user" />
+</menu>

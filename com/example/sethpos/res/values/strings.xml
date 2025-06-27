@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SethPOS</string>
+    <string name="store_profile">โปรไฟล์ร้านค้า</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="inventory">คลังสินค้า</string>
+</resources> 

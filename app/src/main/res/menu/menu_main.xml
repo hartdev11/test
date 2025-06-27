@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_add"
+        android:title="เพิ่มเมนู"
+        android:icon="@android:drawable/ic_menu_add"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_subscription"
+        android:title="สมัครสมาชิกพรีเมียม"
+        android:icon="@drawable/ic_premium_crown"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_profile"
+        android:title="โปรไฟล์ร้านค้า"
+        android:icon="@drawable/ic_person"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_create_post"
+        android:title="สร้างโพสต์"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/menu_printer_settings"
+        android:title="ตั้งค่าเครื่องพิมพ์"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/menu_logout"
+        android:title="ออกจากระบบ"
+        android:icon="@android:drawable/ic_lock_power_off"
+        app:showAsAction="never" />
+
+</menu>

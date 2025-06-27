@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <!-- Placeholder icon for creating a post -->
+    <item
+        android:id="@+id/action_create_post"
+        android:title="สร้างโพสต์"
+        android:icon="@drawable/ic_create_post"
+        app:showAsAction="ifRoom"/>
+
+    <!-- Profile Icon -->
+    <item
+        android:id="@+id/action_store_profile"
+        android:title="โปรไฟล์ร้านค้า"
+        android:icon="@drawable/ic_person"
+        app:showAsAction="ifRoom"/>
+
+    <!-- Shopping Cart Icon -->
+    <item
+        android:id="@+id/action_cart"
+        android:title="ตะกร้าสินค้า"
+        android:icon="@drawable/ic_shopping_cart"
+        app:showAsAction="ifRoom"/>
+
+    <!-- More options icon -->
+    <item
+        android:id="@+id/action_more"
+        android:title="ตัวเลือกเพิ่มเติม"
+        app:showAsAction="never"/>
+</menu> 

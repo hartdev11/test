@@ -1,0 +1,101 @@
+{
+  "project_info": {
+    "project_number": "983948650970",
+    "project_id": "sethpos",
+    "storage_bucket": "sethpos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:983948650970:android:4a6798adcf963e139938e3",
+        "android_client_info": {
+          "package_name": "com.example.sethpos"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "983948650970-mglubufjrngqlhqae7425oefq1f00oe2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.sethpos",
+            "certificate_hash": "319f27ff869391b03a903387810469dd5bf18e16"
+          }
+        },
+        {
+          "client_id": "983948650970-tng4s1mc4l7qlqmfphgs5dnvkmord946.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUqEAM-fK5zlIyChPduAqhXsv4MOLLgMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "983948650970-tng4s1mc4l7qlqmfphgs5dnvkmord946.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      },
+      "admob_app_id": "ca-app-pub-6439629123336863~5144368045"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:983948650970:android:2d7392f84d2182ec9938e3",
+        "android_client_info": {
+          "package_name": "com.natthasethstudio.sethpos"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "983948650970-1cigg6lerteltnr48vqd9m80okt933iu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.natthasethstudio.sethpos",
+            "certificate_hash": "319f27ff869391b03a903387810469dd5bf18e16"
+          }
+        },
+        {
+          "client_id": "983948650970-896m1rvn89rbvva13gq1iq706f546t31.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.natthasethstudio.sethpos",
+            "certificate_hash": "b29557f66d2f32c7c2e1b3e8f22f715140e95ce3"
+          }
+        },
+        {
+          "client_id": "983948650970-pnqe24vh4k5f96jk85uq6ne0vntgip5f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.natthasethstudio.sethpos",
+            "certificate_hash": "2eb9a2e23d90b5cc1275f721adf81b24eec670bb"
+          }
+        },
+        {
+          "client_id": "983948650970-tng4s1mc4l7qlqmfphgs5dnvkmord946.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUqEAM-fK5zlIyChPduAqhXsv4MOLLgMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "983948650970-tng4s1mc4l7qlqmfphgs5dnvkmord946.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ImageView
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:src="@drawable/ic_premium_crown"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="@string/premium_icon" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="อัพเกรดเป็นพรีเมียม"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="อัพเกรดเป็นพรีเมียมเพื่อรับสิทธิประโยชน์มากมาย:\n\n• จัดการร้านค้าได้ไม่จำกัด\n• ดูรายงานยอดขายแบบละเอียด\n• สร้างโปรโมชั่นได้ไม่จำกัด\n• สนับสนุนลูกค้าตลอด 24 ชั่วโมง"
+        android:textSize="16sp"
+        android:lineSpacingExtra="8dp"
+        android:layout_marginBottom="24dp" />
+
+    <Button
+        android:id="@+id/buttonUpgrade"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="อัพเกรดเดี๋ยวนี้"
+        android:textAllCaps="false"
+        android:padding="12dp"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/buttonNotNow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ไม่ใช่ตอนนี้"
+        android:textAllCaps="false"
+        android:padding="12dp"
+        android:backgroundTint="@color/gray"
+        android:layout_marginBottom="16dp" />
+
+    <CheckBox
+        android:id="@+id/checkBoxDontShowToday"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ไม่ต้องแสดงอีกวันนี้"
+        android:textSize="14sp" />
+
+</LinearLayout> 

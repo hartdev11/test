@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Circle -->
+    <path
+        android:fillColor="#FFB600"
+        android:pathData="M60,60m-60,0a60,60 0,1 1,120 0a60,60 0,1 1,-120 0"/>
+
+    <!-- Bear Head -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M60,30C40,30 30,45 30,65C30,85 40,90 60,90C80,90 90,85 90,65C90,45 80,30 60,30Z"/>
+
+    <!-- Bear Ears -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M40,35m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0"/>
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M80,35m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0"/>
+
+    <!-- Bear Snout -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,55C50,55 45,60 45,65C45,70 50,75 60,75C70,75 75,70 75,65C75,60 70,55 60,55Z"/>
+
+    <!-- Bear Eyes -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M50,55m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+    <path
+        android:fillColor="#000000"
+        android:pathData="M70,55m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+
+    <!-- Bear Nose -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M60,65m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+
+    <!-- Bear Mouth -->
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M55,70Q60,75 65,70"/>
+</vector> 

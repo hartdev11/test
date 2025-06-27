@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Circle - Bright Green -->
+    <path
+        android:fillColor="#7ED957"
+        android:pathData="M60,60m-60,0a60,60 0,1 1,120 0a60,60 0,1 1,-120 0"/>
+
+    <!-- Moose Head -->
+    <path
+        android:fillColor="#A0522D"
+        android:pathData="M60,40 C40,40 35,55 35,70 C35,85 45,90 60,90 C75,90 85,85 85,70 C85,55 80,40 60,40 Z"/>
+
+    <!-- Moose Antlers - Left -->
+    <path
+        android:fillColor="#8B4513"
+        android:pathData="M40,30 C25,15 15,25 20,40 C25,55 35,45 40,30 Z"/>
+    <path
+        android:fillColor="#8B4513"
+        android:pathData="M30,40 C20,35 10,45 15,55 C20,65 30,58 30,40 Z"/>
+
+    <!-- Moose Antlers - Right -->
+    <path
+        android:fillColor="#8B4513"
+        android:pathData="M80,30 C95,15 105,25 100,40 C95,55 85,45 80,30 Z"/>
+     <path
+        android:fillColor="#8B4513"
+        android:pathData="M90,40 C100,35 110,45 105,55 C100,65 90,58 90,40 Z"/>
+
+    <!-- Moose Snout -->
+    <path
+        android:fillColor="#CD853F"
+        android:pathData="M60,60 C50,60 45,65 45,70 C45,75 50,80 60,80 C70,80 75,75 75,70 C75,65 70,60 60,60 Z"/>
+
+    <!-- Moose Eyes -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M50,55 m -4,0 a 4,4 0,1 1,8 0 a 4,4 0,1 1,-8 0"/>
+    <path
+        android:fillColor="#000000"
+        android:pathData="M70,55 m -4,0 a 4,4 0,1 1,8 0 a 4,4 0,1 1,-8 0"/>
+
+    <!-- Moose Nose -->
+    <path
+        android:fillColor="#8B4513"
+        android:pathData="M60,70 m -3,0 a 3,3 0,1 1,6 0 a 3,3 0,1 1,-6 0"/>
+
+    <!-- Moose Mouth -->
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M55,70 Q60,75 65,70"/>
+
+</vector> 

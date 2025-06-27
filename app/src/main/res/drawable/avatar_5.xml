@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Circle (Kahoot yellow) -->
+    <path
+        android:fillColor="#DAA520"
+        android:pathData="M60,60m-60,0a60,60 0,1 1,120 0a60,60 0,1 1,-120 0"/>
+
+    <!-- Lion Cub Mane -->
+    <path
+        android:fillColor="#FFB600"
+        android:pathData="M60,30C40,30 25,45 25,65C25,85 40,95 60,95C80,95 95,85 95,65C95,45 80,30 60,30Z"/>
+
+    <!-- Lion Cub Face -->
+    <path
+        android:fillColor="#F0E68C"
+        android:pathData="M60,45C48,45 40,55 40,65C40,75 48,80 60,80C72,80 80,75 80,65C80,55 72,45 60,45Z"/>
+
+    <!-- Lion Cub Ears -->
+    <path
+        android:fillColor="#FFB600"
+        android:pathData="M45,40m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0"/>
+    <path
+        android:fillColor="#FFB600"
+        android:pathData="M75,40m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0"/>
+
+    <!-- Lion Cub Inner Ears -->
+    <path
+        android:fillColor="#F0E68C"
+        android:pathData="M45,40m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0"/>
+    <path
+        android:fillColor="#F0E68C"
+        android:pathData="M75,40m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0"/>
+
+    <!-- Lion Cub Eyes -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M50,60m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+    <path
+        android:fillColor="#000000"
+        android:pathData="M70,60m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+
+    <!-- Lion Cub Nose -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M60,68m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"/>
+
+    <!-- Lion Cub Mouth -->
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M55,72Q60,77 65,72"/>
+
+</vector> 

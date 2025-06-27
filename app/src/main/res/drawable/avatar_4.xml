@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Circle (Kahoot orange) -->
+    <path
+        android:fillColor="#FF8C00"
+        android:pathData="M60,60m-60,0a60,60 0,1 1,120 0a60,60 0,1 1,-120 0"/>
+
+    <!-- Cat Face Shape -->
+    <path
+        android:fillColor="#FFA500"
+        android:pathData="M60,35 C45,35 35,45 35,65 C35,85 45,90 60,90 C75,90 85,85 85,65 C85,45 75,35 60,35 Z"/>
+
+    <!-- Cat Ears -->
+    <path
+        android:fillColor="#FFA500"
+        android:pathData="M40,35 L30,20 L45,30 Z"/>
+    <path
+        android:fillColor="#FFA500"
+        android:pathData="M80,35 L90,20 L75,30 Z"/>
+
+    <!-- Cat Eyes -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M50,55 m -3,0 a 3,3 0,1 1,6 0 a 3,3 0,1 1,-6 0"/>
+    <path
+        android:fillColor="#000000"
+        android:pathData="M70,55 m -3,0 a 3,3 0,1 1,6 0 a 3,3 0,1 1,-6 0"/>
+
+    <!-- Cat Nose -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M60,65 m -2,0 a 2,2 0,1 1,4 0 a 2,2 0,1 1,-4 0"/>
+
+    <!-- Cat Mouth -->
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M55,70 Q60,75 65,70"/>
+
+    <!-- Cat Whiskers -->
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M55,68 L45,65"/>
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M55,70 L45,70"/>
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M55,72 L45,75"/>
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M65,68 L75,65"/>
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M65,70 L75,70"/>
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="1"
+        android:strokeLineCap="round"
+        android:pathData="M65,72 L75,75"/>
+
+</vector> 

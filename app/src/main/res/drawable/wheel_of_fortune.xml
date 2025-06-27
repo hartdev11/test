@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="300dp"
+    android:viewportWidth="300"
+    android:viewportHeight="300">
+    
+    <!-- Outer glow -->
+    <path
+        android:fillColor="#33000000"
+        android:pathData="M150,150m-150,0a150,150 0,1 1,300 0a150,150 0,1 1,-300 0"/>
+    
+    <!-- Background circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M150,150m-145,0a145,145 0,1 1,290 0a145,145 0,1 1,-290 0"/>
+    
+    <!-- Segments with modern colors (recalculated for perfect circle and ordered by image) -->
+    <!-- Segment 1 (Red): Top -->
+    <path
+        android:fillColor="#FF6B6B"
+        android:pathData="M150,150L150,5A145,145 0 0,1 275.5,77.5Z"/>
+    <!-- Segment 2 (Orange): Top-right -->
+    <path
+        android:fillColor="#FF9B50"
+        android:pathData="M150,150L275.5,77.5A145,145 0 0,1 275.5,222.5Z"/>
+    <!-- Segment 3 (Yellow): Bottom-right -->
+    <path
+        android:fillColor="#FFD93D"
+        android:pathData="M150,150L275.5,222.5A145,145 0 0,1 150,295Z"/>
+    <!-- Segment 4 (Green): Bottom -->
+    <path
+        android:fillColor="#6BCB77"
+        android:pathData="M150,150L150,295A145,145 0 0,1 24.5,222.5Z"/>
+    <!-- Segment 5 (Blue): Bottom-left -->
+    <path
+        android:fillColor="#4D96FF"
+        android:pathData="M150,150L24.5,222.5A145,145 0 0,1 24.5,77.5Z"/>
+    <!-- Segment 6 (Purple): Top-left -->
+    <path
+        android:fillColor="#9B72CF"
+        android:pathData="M150,150L24.5,77.5A145,145 0 0,1 150,5Z"/>
+    
+    <!-- Inner circle -->
+    <path
+        android:fillColor="#F5F5F5"
+        android:pathData="M150,150m-35,0a35,35 0,1 1,70 0a35,35 0,1 1,-70 0"/>
+    
+    <!-- Border -->
+    <path
+        android:strokeColor="#E0E0E0"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:pathData="M150,150m-145,0a145,145 0,1 1,290 0a145,145 0,1 1,-290 0"/>
+    
+    <!-- Decorative lines -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M150,150L150,5"/>
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M150,150L275.5,77.5"/>
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M150,150L275.5,222.5"/>
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M150,150L150,295"/>
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M150,150L24.5,222.5"/>
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M150,150L24.5,77.5"/>
+</vector> 

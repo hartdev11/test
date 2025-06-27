@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAFAFA">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarCart"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:fitsSystemWindows="true" />
+
+    <!-- ข้อความแสดงเมื่อไม่มีสินค้าในตะกร้า -->
+    <TextView
+        android:id="@+id/tvCartEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/cart_empty"
+        android:textSize="18sp"
+        android:textColor="#757575"
+        android:gravity="center"
+        android:visibility="gone"
+        android:padding="16dp"/>
+
+    <!-- รายการสินค้าในตะกร้า -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvCartItems"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"/>
+
+    <!-- กล่องเลือกประเภทการสั่ง -->
+    <RadioGroup
+        android:id="@+id/rgOrderType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <RadioButton
+            android:id="@+id/rbEatHere"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/order_eat_here"
+            android:minHeight="48dp"
+            android:padding="12dp" />
+
+        <RadioButton
+            android:id="@+id/rbDelivery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/order_delivery"
+            android:minHeight="48dp"
+            android:padding="12dp" />
+
+        <RadioButton
+            android:id="@+id/rbPickup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/order_pickup"
+            android:minHeight="48dp"
+            android:padding="12dp" />
+    </RadioGroup>
+
+    <!-- ช่องใส่หมายเหตุ -->
+    <EditText
+        android:id="@+id/etNote"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/note_hint"
+        android:inputType="textMultiLine"
+        android:autofillHints="text"
+        android:minLines="2"
+        android:padding="8dp"
+        android:background="@android:drawable/edit_text" />
+
+    <!-- แสดงราคาทั้งหมด -->
+    <TextView
+        android:id="@+id/tvTotalPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/total_price_default"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:padding="16dp"
+        android:gravity="end" />
+
+    <!-- ปุ่มชำระเงิน -->
+    <Button
+        android:id="@+id/btnPrintReceipt"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="@string/print_receipt"
+        android:backgroundTint="#1E88E5"
+        android:textColor="#FFFFFF"
+        android:layout_margin="16dp"
+        android:enabled="false" />
+</LinearLayout>

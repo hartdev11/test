@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Circle (Kahoot grey) -->
+    <path
+        android:fillColor="#C0C0C0"
+        android:pathData="M60,60m-60,0a60,60 0,1 1,120 0a60,60 0,1 1,-120 0"/>
+
+    <!-- Rabbit Face Shape -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,40C45,40 35,50 35,65C35,80 45,85 60,85C75,85 85,80 85,65C85,50 75,40 60,40Z"/>
+
+    <!-- Rabbit Ears - Left -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M45,40 L40,10 L50,25 Z"/>
+    <path
+        android:fillColor="#FFB6C1"
+        android:pathData="M45,40 L42,15 L48,25 Z"/>
+
+    <!-- Rabbit Ears - Right -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M75,40 L80,10 L70,25 Z"/>
+    <path
+        android:fillColor="#FFB6C1"
+        android:pathData="M75,40 L78,15 L72,25 Z"/>
+
+    <!-- Rabbit Eyes -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M50,58m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+    <path
+        android:fillColor="#000000"
+        android:pathData="M70,58m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+
+    <!-- Rabbit Nose -->
+    <path
+        android:fillColor="#FFB6C1"
+        android:pathData="M60,68m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"/>
+
+    <!-- Rabbit Mouth -->
+     <path
+        android:strokeColor="#000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M55,72Q60,77 65,72"/>
+
+</vector> 

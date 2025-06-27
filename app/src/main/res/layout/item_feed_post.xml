@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="8dp">
+
+    <!-- Post Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginVertical="8dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0dp"
+        android:backgroundTint="@color/surface_light">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- User Info and More Button -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/userImage"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_default_user"
+                    app:shapeAppearanceOverlay="@style/CircleImageView"
+                    android:padding="2dp"
+                    android:background="@drawable/circle_background"
+                    android:contentDescription="@string/post_user_image_description"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/userName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textStyle="bold"
+                            android:textSize="16sp"
+                            android:textColor="@color/text_primary"
+                            android:maxLines="1"
+                            android:ellipsize="end"/>
+
+                        <ImageView
+                            android:id="@+id/verifiedBadge"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="4dp"
+                            android:src="@drawable/ic_verified_store"
+                            android:visibility="gone"
+                            android:contentDescription="@string/verified_badge_description" />
+
+                        <ImageView
+                            android:id="@+id/crownIcon"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="4dp"
+                            android:src="@drawable/ic_crown"
+                            android:visibility="gone"
+                            android:contentDescription="@string/crown_icon_description" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/postTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"/>
+
+                </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/btnMore"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_more_vertical_minimal"
+                    android:contentDescription="@string/more_options"
+                    app:tint="@color/text_primary" />
+
+            </LinearLayout>
+
+            <!-- Post Content -->
+            <TextView
+                android:id="@+id/postContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="12dp"
+                android:textSize="24sp"
+                android:textColor="@color/text_primary"/>
+
+            <!-- Post Image -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/postImage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
+                android:visibility="gone"
+                android:contentDescription="@string/post_image_description"/>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Divider after Post Card -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginTop="8dp"/>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="0dp"
+        android:paddingVertical="4dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLike"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text=""
+            android:textColor="@color/text_primary"
+            app:icon="@drawable/ic_heart_outline"
+            app:iconTint="@color/text_primary"
+            android:backgroundTint="@android:color/transparent"
+            android:stateListAnimator="@null"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+            android:contentDescription="@string/post_like_button_description" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnComment"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text=""
+            android:textColor="@color/text_primary"
+            app:icon="@drawable/ic_comment"
+            app:iconTint="@color/text_primary"
+            android:backgroundTint="@android:color/transparent"
+            android:stateListAnimator="@null"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+            android:contentDescription="@string/post_comment_button_description" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginEnd="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBoost"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:minWidth="48dp"
+                android:minHeight="48dp"
+                android:text=""
+                android:gravity="center"
+                app:icon="@drawable/ic_boost_post"
+                app:iconTint="@color/text_primary"
+                android:backgroundTint="@android:color/transparent"
+                android:stateListAnimator="@null"
+                style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+                android:contentDescription="@string/post_boost_button_description" />
+
+            <TextView
+                android:id="@+id/boostLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="บูสต์"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:layout_marginTop="0dp"/>
+
+            <TextView
+                android:id="@+id/boostCount"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:minWidth="24dp"
+                android:minHeight="28dp"
+                android:gravity="center"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:includeFontPadding="true"
+                android:lineSpacingExtra="2dp"
+                android:fontFamily="sans-serif"
+                android:layout_marginTop="0dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Divider after Action Buttons -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginTop="4dp"/>
+
+    <!-- Like and Comment Count Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="4dp">
+
+        <TextView
+            android:id="@+id/likeCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/post_like"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:layout_marginStart="4dp" />
+
+        <TextView
+            android:id="@+id/commentCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:layout_marginStart="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/post_comment"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:layout_marginStart="4dp" />
+
+    </LinearLayout>
+
+    <!-- View All Comments Button -->
+    <TextView
+        android:id="@+id/viewAllComments"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:visibility="gone"
+        tools:text="ดูความคิดเห็นทั้งหมด 5 รายการ"
+        tools:visibility="visible"
+        android:minHeight="48dp" />
+
+</LinearLayout>
