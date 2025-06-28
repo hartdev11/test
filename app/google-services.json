@@ -68,6 +68,14 @@
           }
         },
         {
+          "client_id": "983948650970-na2m4oke74o5ti2quf1210qf2mgq8uq2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.natthasethstudio.sethpos",
+            "certificate_hash": "8f5c268f19ecbee56569347e4c7108e95eba4598"
+          }
+        },
+        {
           "client_id": "983948650970-pnqe24vh4k5f96jk85uq6ne0vntgip5f.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

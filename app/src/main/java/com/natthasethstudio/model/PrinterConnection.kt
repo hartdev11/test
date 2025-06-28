@@ -9,5 +9,6 @@ data class PrinterConnection(
     var connectionType: String, // "Bluetooth", "Network"
     var address: String, // MAC address for Bluetooth, IP address for Network
     var port: Int = 9100,
-    var isEnabled: Boolean = true
+    var isEnabled: Boolean = true,
+    var logoUri: String? = null // URI โลโก้ร้าน (ถ้ามี)
 ) 

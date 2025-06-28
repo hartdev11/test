@@ -43,7 +43,12 @@ class FeedAdapter(
     private val processingLikePostIds: Set<String>,
     private val onLikeClickListener: (Post, Int) -> Unit,
     private val onCommentClickListener: (Post, Int) -> Unit
-) : ListAdapter<Post, FeedAdapter.PostViewHolder>(DiffCallback()) {
+) : ListAdapter<Post, RecyclerView.ViewHolder>(DiffCallback()) {
+
+    companion object {
+        private const val VIEW_TYPE_POST = 0
+        private const val VIEW_TYPE_LOADING = 1
+    }
 
     private val firestore = FirebaseFirestore.getInstance()
     private val userCache = mutableMapOf<String, UserCacheEntry>()
@@ -56,6 +61,12 @@ class FeedAdapter(
     private val boostProcessingMap = mutableMapOf<String, Boolean>() // เพิ่ม map สำหรับติดตามการบูสต์แต่ละโพสต์
     private val boostDebounceTime = 500L // 500ms debounce time
     private val boostDebounceMap = mutableMapOf<String, Long>()
+    private var isLoading = false
+
+    // Function to get item at position
+    override fun getItem(position: Int): Post {
+        return currentList[position]
+    }
 
     // Function to update current user ID
     fun setCurrentUserId(userId: String?) {
@@ -67,73 +78,51 @@ class FeedAdapter(
     fun clearAllCaches() {
         userCache.clear()
         boostCache.clear()
+        boostProcessingMap.clear()
     }
 
-    inner class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val userImage: ShapeableImageView = itemView.findViewById(R.id.userImage)
-        val userName: TextView = itemView.findViewById(R.id.userName)
-        val postTime: TextView = itemView.findViewById(R.id.postTime)
-        val postImage: ShapeableImageView = itemView.findViewById(R.id.postImage)
-        val postContent: TextView = itemView.findViewById(R.id.postContent)
-        val btnLike: MaterialButton = itemView.findViewById(R.id.btnLike)
-        val btnComment: MaterialButton = itemView.findViewById(R.id.btnComment)
-        val btnBoost: MaterialButton = itemView.findViewById(R.id.btnBoost)
-        val likeCount: TextView = itemView.findViewById(R.id.likeCount)
-        val viewAllComments: TextView = itemView.findViewById(R.id.viewAllComments)
-        val btnMore: ImageButton = itemView.findViewById(R.id.btnMore)
-        val crownIcon: ImageView = itemView.findViewById(R.id.crownIcon)
-        val verifiedBadge: ImageView = itemView.findViewById(R.id.verifiedBadge)
-        val boostCount: TextView = itemView.findViewById(R.id.boostCount)
-        val boostLabel: TextView? = itemView.findViewById(R.id.boostLabel)
-
-        init {
-            // Add ripple effect to clickable views
-            userImage.setOnClickListener {
-                val position = bindingAdapterPosition
-                if (position != RecyclerView.NO_POSITION) {
-                    val post = getItem(position)
-                    post.userId?.let { userId ->
-                        val intent = Intent(itemView.context, ProfileActivity::class.java)
-                        intent.putExtra("userId", userId)
-                        itemView.context.startActivity(intent)
-                    }
-                }
-            }
-
-            // Add double tap to like
-            postImage.setOnClickListener {
-                if (!isAnimating) {
-                    val position = bindingAdapterPosition
-                    if (position != RecyclerView.NO_POSITION) {
-                        val post = getItem(position)
-                        if (!post.isLiked) {
-                            animateLike()
-                            onLikeClickListener.invoke(post, position)
-                        }
-                    }
-                }
+    fun setLoading(loading: Boolean) {
+        val oldLoading = isLoading
+        isLoading = loading
+        if (oldLoading != loading) {
+            if (loading) {
+                notifyItemInserted(itemCount)
+            } else {
+                notifyItemRemoved(itemCount)
             }
         }
+    }
 
-        private fun animateLike() {
-            isAnimating = true
-            val likeAnimation = AnimationUtils.loadAnimation(itemView.context, R.anim.like_animation)
-            postImage.startAnimation(likeAnimation)
-            
-            handler.postDelayed({
-                isAnimating = false
-            }, likeAnimation.duration)
+    override fun getItemViewType(position: Int): Int {
+        return if (position == itemCount - 1 && isLoading) VIEW_TYPE_LOADING else VIEW_TYPE_POST
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return when (viewType) {
+            VIEW_TYPE_LOADING -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.loading_state, parent, false)
+                LoadingViewHolder(view)
+            }
+            else -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.item_feed_post, parent, false)
+                PostViewHolder(view)
+            }
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_feed_post, parent, false)
-        return PostViewHolder(view)
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder) {
+            is PostViewHolder -> {
+                val post = getItem(position)
+                bindPostViewHolder(holder, post, position)
+            }
+            is LoadingViewHolder -> {
+                // Loading view doesn't need binding
+            }
+        }
     }
 
-    override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
-        val post = getItem(position)
-
+    private fun bindPostViewHolder(holder: PostViewHolder, post: Post, position: Int) {
         // Display nickname if available from post object, otherwise display full name
         if (!post.nickname.isNullOrEmpty()) {
             holder.userName.text = post.nickname
@@ -346,6 +335,25 @@ class FeedAdapter(
     }
 
     private fun setupClickListeners(holder: PostViewHolder, post: Post, position: Int) {
+        // User image click listener
+        holder.userImage.setOnClickListener {
+            post.userId?.let { userId ->
+                val intent = Intent(holder.itemView.context, ProfileActivity::class.java)
+                intent.putExtra("userId", userId)
+                holder.itemView.context.startActivity(intent)
+            }
+        }
+
+        // Double tap to like on post image
+        holder.postImage.setOnClickListener {
+            if (!isAnimating) {
+                if (!post.isLiked) {
+                    animateLike(holder)
+                    onLikeClickListener.invoke(post, position)
+                }
+            }
+        }
+
         holder.btnLike.setOnClickListener {
             if (!isAnimating) {
                 // Add haptic feedback
@@ -390,6 +398,16 @@ class FeedAdapter(
             holder.btnMore.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
             showPostOptionsMenu(view, post, position)
         }
+    }
+
+    private fun animateLike(holder: PostViewHolder) {
+        isAnimating = true
+        val likeAnimation = AnimationUtils.loadAnimation(holder.itemView.context, R.anim.like_animation)
+        holder.postImage.startAnimation(likeAnimation)
+        
+        handler.postDelayed({
+            isAnimating = false
+        }, likeAnimation.duration)
     }
 
     private fun showPostOptionsMenu(view: View, post: Post, position: Int) {
@@ -656,7 +674,8 @@ class FeedAdapter(
             .load(imageUrl)
             .placeholder(R.drawable.ic_image)
             .error(R.drawable.ic_image)
-            .transition(DrawableTransitionOptions.withCrossFade())
+            .transition(DrawableTransitionOptions.withCrossFade(300))
+            .centerCrop()
             .into(imageView)
     }
 
@@ -681,4 +700,24 @@ class FeedAdapter(
                    oldItem.postTime == newItem.postTime
         }
     }
+
+    class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val userImage: ShapeableImageView = itemView.findViewById(R.id.userImage)
+        val userName: TextView = itemView.findViewById(R.id.userName)
+        val postTime: TextView = itemView.findViewById(R.id.postTime)
+        val postImage: ShapeableImageView = itemView.findViewById(R.id.postImage)
+        val postContent: TextView = itemView.findViewById(R.id.postContent)
+        val btnLike: MaterialButton = itemView.findViewById(R.id.btnLike)
+        val btnComment: MaterialButton = itemView.findViewById(R.id.btnComment)
+        val btnBoost: MaterialButton = itemView.findViewById(R.id.btnBoost)
+        val likeCount: TextView = itemView.findViewById(R.id.likeCount)
+        val viewAllComments: TextView = itemView.findViewById(R.id.viewAllComments)
+        val btnMore: ImageButton = itemView.findViewById(R.id.btnMore)
+        val crownIcon: ImageView = itemView.findViewById(R.id.crownIcon)
+        val verifiedBadge: ImageView = itemView.findViewById(R.id.verifiedBadge)
+        val boostCount: TextView = itemView.findViewById(R.id.boostCount)
+        val boostLabel: TextView? = itemView.findViewById(R.id.boostLabel)
+    }
+
+    class LoadingViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 }

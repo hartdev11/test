@@ -12,10 +12,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.SignInButton
+import com.google.android.gms.common.api.Status
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import android.content.pm.PackageManager
 
 class LoginActivity : AppCompatActivity() {
 
@@ -30,18 +32,32 @@ class LoginActivity : AppCompatActivity() {
 
     private val googleSignInLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            Log.d("LoginActivity", "Google Sign-In result code: ${result.resultCode}")
             if (result.resultCode == RESULT_OK) {
                 val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                 try {
                     val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)!!
+                    Log.d("LoginActivity", "Google Sign-In successful for: ${account.email}")
                     firebaseAuthWithGoogle(account.idToken!!)
                 } catch (e: com.google.android.gms.common.api.ApiException) {
-                    Log.w("LoginActivity", "Google sign in failed", e)
-                    Toast.makeText(this, "Google Sign-In failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Log.e("LoginActivity", "Google sign in failed", e)
+                    val errorMessage = when (e.statusCode) {
+                        com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes.SIGN_IN_CANCELLED -> "การเข้าสู่ระบบถูกยกเลิก"
+                        com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes.NETWORK_ERROR -> "เกิดข้อผิดพลาดเครือข่าย"
+                        com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes.INVALID_ACCOUNT -> "บัญชีไม่ถูกต้อง"
+                        com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes.SIGN_IN_REQUIRED -> "จำเป็นต้องเข้าสู่ระบบ"
+                        else -> "Google Sign-In failed: ${e.message}"
+                    }
+                    Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
                     progressBar.visibility = View.GONE
                 }
             } else {
-                Toast.makeText(this, "Google Sign-In cancelled", Toast.LENGTH_SHORT).show()
+                Log.w("LoginActivity", "Google Sign-In cancelled or failed with result code: ${result.resultCode}")
+                val errorMessage = when (result.resultCode) {
+                    RESULT_CANCELED -> "การเข้าสู่ระบบถูกยกเลิก"
+                    else -> "Google Sign-In failed with code: ${result.resultCode}"
+                }
+                Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
                 progressBar.visibility = View.GONE
             }
         }
@@ -49,6 +65,9 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+
+        // Debug: Print SHA-1 fingerprint
+        printSHA1Fingerprint()
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
@@ -158,8 +177,16 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun signInWithGoogle() {
-        val signInIntent = googleSignInClient.signInIntent
-        googleSignInLauncher.launch(signInIntent)
+        Log.d("LoginActivity", "Starting Google Sign-In process")
+        try {
+            val signInIntent = googleSignInClient.signInIntent
+            Log.d("LoginActivity", "Launching Google Sign-In intent")
+            googleSignInLauncher.launch(signInIntent)
+        } catch (e: Exception) {
+            Log.e("LoginActivity", "Error launching Google Sign-In", e)
+            Toast.makeText(this, "เกิดข้อผิดพลาดในการเริ่มต้น Google Sign-In: ${e.message}", Toast.LENGTH_LONG).show()
+            progressBar.visibility = View.GONE
+        }
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
@@ -196,5 +223,40 @@ class LoginActivity : AppCompatActivity() {
                     progressBar.visibility = View.GONE
                 }
             }
+    }
+
+    private fun printSHA1Fingerprint() {
+        try {
+            val packageInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+            }
+            
+            val signatures = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                packageInfo.signingInfo?.apkContentsSigners ?: emptyArray()
+            } else {
+                @Suppress("DEPRECATION")
+                packageInfo.signatures
+            }
+            
+            for (signature in signatures) {
+                val md = java.security.MessageDigest.getInstance("SHA1")
+                md.update(signature.toByteArray())
+                val digest = md.digest()
+                val hexString = StringBuilder()
+                for (b in digest) {
+                    val hex = Integer.toHexString(0xFF and b.toInt())
+                    if (hex.length == 1) {
+                        hexString.append('0')
+                    }
+                    hexString.append(hex)
+                }
+                Log.d("LoginActivity", "SHA-1 Fingerprint: ${hexString.toString()}")
+            }
+        } catch (e: Exception) {
+            Log.e("LoginActivity", "Error getting SHA-1 fingerprint", e)
+        }
     }
 }

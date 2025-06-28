@@ -332,6 +332,8 @@ class CreatePostActivity : AppCompatActivity() {
         try {
             currentUserId?.let { userId ->
                 currentUser?.let { user ->
+                    Log.d("CreatePostActivity", "Current user: ${user.displayName}, email: ${user.email}, uid: ${user.uid}")
+                    
                     if (!isNetworkAvailable()) {
                         Toast.makeText(this, "ไม่มีการเชื่อมต่ออินเทอร์เน็ต", Toast.LENGTH_SHORT).show()
                         return
@@ -351,18 +353,63 @@ class CreatePostActivity : AppCompatActivity() {
                         .get()
                         .addOnSuccessListener { documentSnapshot ->
                             try {
+                                Log.d("CreatePostActivity", "Fetching user data for userId: $userId")
+                                Log.d("CreatePostActivity", "Document exists: ${documentSnapshot.exists()}")
+                                
                                 if (!documentSnapshot.exists()) {
-                                    handleError("ไม่พบข้อมูลผู้ใช้ กรุณาล็อกอินใหม่")
+                                    Log.e("CreatePostActivity", "User document does not exist for userId: $userId")
+                                    Log.d("CreatePostActivity", "Creating user document for userId: $userId")
+                                    
+                                    // สร้าง user document ใหม่
+                                    val userData = mapOf(
+                                        "userId" to userId,
+                                        "displayName" to (user.displayName ?: "User"),
+                                        "email" to (user.email ?: ""),
+                                        "avatarId" to 0,
+                                        "role" to "customer",
+                                        "createdAt" to com.google.firebase.Timestamp.now()
+                                    )
+                                    
+                                    firestore.collection("users").document(userId)
+                                        .set(userData)
+                                        .addOnSuccessListener {
+                                            Log.d("CreatePostActivity", "User document created successfully")
+                                            // เรียกใช้ฟังก์ชันเดิมอีกครั้งหลังจากสร้าง document
+                                            createNewPost(postText, imageUri)
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Log.e("CreatePostActivity", "Error creating user document: ${e.message}")
+                                            handleError("เกิดข้อผิดพลาดในการสร้างข้อมูลผู้ใช้: ${e.message}")
+                                        }
                                     return@addOnSuccessListener
                                 }
 
+                                Log.d("CreatePostActivity", "Document data: ${documentSnapshot.data}")
+                                
                                 val avatarId = documentSnapshot.getLong("avatarId")?.toInt() ?: 0
                                 val displayName = documentSnapshot.getString("displayName")
                                 val role = documentSnapshot.getString("role")
 
                                 Log.d("CreatePostActivity", "User data - displayName: $displayName, role: $role")
+                                
+                                // ตรวจสอบ field names ที่มีใน document
+                                documentSnapshot.data?.keys?.forEach { key ->
+                                    Log.d("CreatePostActivity", "Field: $key = ${documentSnapshot.get(key)}")
+                                }
 
-                                if (displayName.isNullOrEmpty()) {
+                                // ลองหาชื่อผู้ใช้จาก field names อื่นๆ ถ้า displayName เป็น null
+                                var finalDisplayName = displayName
+                                if (finalDisplayName.isNullOrEmpty()) {
+                                    finalDisplayName = documentSnapshot.getString("name") ?: 
+                                                     documentSnapshot.getString("username") ?: 
+                                                     documentSnapshot.getString("nickname") ?:
+                                                     documentSnapshot.getString("fullName")
+                                    
+                                    Log.d("CreatePostActivity", "Tried fallback names - finalDisplayName: $finalDisplayName")
+                                }
+
+                                if (finalDisplayName.isNullOrEmpty()) {
+                                    Log.e("CreatePostActivity", "Display name is null or empty. Available fields: ${documentSnapshot.data?.keys}")
                                     handleError("ไม่พบชื่อผู้ใช้ กรุณาตั้งชื่อในโปรไฟล์")
                                     return@addOnSuccessListener
                                 }
@@ -399,7 +446,7 @@ class CreatePostActivity : AppCompatActivity() {
                                                         val postTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
                                                         val post = Post(
                                                             userId = userId,
-                                                            displayName = displayName,
+                                                            displayName = finalDisplayName,
                                                             profileImageUrl = user.photoUrl?.toString(),
                                                             postTime = postTime,
                                                             postText = postText,
@@ -426,7 +473,7 @@ class CreatePostActivity : AppCompatActivity() {
                                         val postTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
                                         val post = Post(
                                             userId = userId,
-                                            displayName = displayName,
+                                            displayName = finalDisplayName,
                                             profileImageUrl = user.photoUrl?.toString(),
                                             postTime = postTime,
                                             postText = postText,
@@ -494,9 +541,15 @@ class CreatePostActivity : AppCompatActivity() {
     private fun handleProvinceResult(addresses: List<Address>?, onProvinceReady: () -> Unit) {
         if (!addresses.isNullOrEmpty()) {
             val province = addresses[0].adminArea
+            Log.d("CreatePostActivity", "Raw province from geocoder: $province")
             if (!province.isNullOrEmpty()) {
                 currentProvince = province
+                Log.d("CreatePostActivity", "Set currentProvince to: $currentProvince")
+            } else {
+                Log.w("CreatePostActivity", "Province is null or empty from geocoder")
             }
+        } else {
+            Log.w("CreatePostActivity", "No addresses found from geocoder")
         }
         onProvinceReady()
     }
@@ -507,16 +560,22 @@ class CreatePostActivity : AppCompatActivity() {
             if (province != null) {
                 postMap["province"] = province
             }
+            
+            Log.d("CreatePostActivity", "Saving post with province: ${postMap["province"]}")
+            
             firestore.collection("posts").add(postMap)
-                .addOnSuccessListener {
+                .addOnSuccessListener { documentReference ->
+                    Log.d("CreatePostActivity", "Post saved successfully with ID: ${documentReference.id}")
                     Toast.makeText(this, "โพสต์สำเร็จ", Toast.LENGTH_SHORT).show()
                     setResult(RESULT_OK)
                     finish()
                 }
                 .addOnFailureListener { e ->
+                    Log.e("CreatePostActivity", "Error saving post: ${e.message}")
                     handleError("เกิดข้อผิดพลาดในการบันทึกโพสต์: ${e.message}")
                 }
         } catch (e: Exception) {
+            Log.e("CreatePostActivity", "Error in savePostToFirestore: ${e.message}")
             handleError("เกิดข้อผิดพลาดในการบันทึกโพสต์: ${e.message}")
         }
     }
@@ -530,6 +589,7 @@ class CreatePostActivity : AppCompatActivity() {
         map["postText"] = post.postText
         map["postImageUrl"] = post.postImageUrl
         map["avatarId"] = post.avatarId
+        map["province"] = post.province
         return map
     }
 

@@ -100,17 +100,49 @@ class CartActivity : AppCompatActivity() {
         calculateTotalPrice()
 
         btnPrintReceipt.setOnClickListener {
-            checkPrintersBeforePrinting()
+            showTableOrNoteDialog()
         }
     }
 
-    private fun checkPrintersBeforePrinting() {
+    private fun showTableOrNoteDialog() {
+        val input = EditText(this)
+        input.hint = "เช่น โต๊ะ 5 หรือ หมายเหตุ"
+        input.maxLines = 1
+        MaterialAlertDialogBuilder(this)
+            .setTitle("กรอกชื่อรายการ/เลขที่โต๊ะ")
+            .setView(input)
+            .setPositiveButton("ตกลง") { _, _ ->
+                val tableOrNote = input.text.toString().trim()
+                checkPrintersBeforePrinting(tableOrNote)
+            }
+            .setNegativeButton("ยกเลิก", null)
+            .show()
+    }
+
+    private fun checkPrintersBeforePrinting(tableOrNote: String = "") {
         if (printerRepository.getAllPrinters().isNotEmpty()) {
-            // มีเครื่องพิมพ์, ทำการบันทึกและพิมพ์
-            saveOrderAndPrint()
+            saveOrderAndPrint(tableOrNote)
         } else {
-            // ไม่มีเครื่องพิมพ์, แสดง dialog ถาม
             showNoPrinterDialog()
+        }
+    }
+
+    private fun saveOrderAndPrint(tableOrNote: String = "") {
+        val selectedOrderTypeId = rgOrderType.checkedRadioButtonId
+        if (selectedOrderTypeId == -1) {
+            Toast.makeText(this, "กรุณาเลือกประเภทการสั่ง", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val orderType = findViewById<RadioButton>(selectedOrderTypeId).text.toString()
+        val note = etNote.text.toString()
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Toast.makeText(this, "ผู้ใช้ยังไม่ได้เข้าสู่ระบบ", Toast.LENGTH_SHORT).show()
+            return
+        }
+        // รอให้บันทึกสำเร็จใน Firebase ก่อนค่อย print
+        saveOrderToFirebase(currentUser.uid, orderType, note) {
+            printReceipt(currentUser.uid, orderType, note, tableOrNote)
         }
     }
 
@@ -131,26 +163,6 @@ class CartActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun saveOrderAndPrint() {
-        // ดึงข้อมูลและ validate
-        val selectedOrderTypeId = rgOrderType.checkedRadioButtonId
-        if (selectedOrderTypeId == -1) {
-            Toast.makeText(this, "กรุณาเลือกประเภทการสั่ง", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val orderType = findViewById<RadioButton>(selectedOrderTypeId).text.toString()
-        val note = etNote.text.toString()
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            Toast.makeText(this, "ผู้ใช้ยังไม่ได้เข้าสู่ระบบ", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // บันทึกและพิมพ์
-        saveOrderToFirebase(currentUser.uid, orderType, note)
-        printReceipt(currentUser.uid, orderType, note)
-    }
-    
     private fun saveOrderAndFinish() {
         // ดึงข้อมูลและ validate
         val selectedOrderTypeId = rgOrderType.checkedRadioButtonId
@@ -167,9 +179,10 @@ class CartActivity : AppCompatActivity() {
         }
 
         // บันทึกอย่างเดียว
-        saveOrderToFirebase(currentUser.uid, orderType, note)
-        Toast.makeText(this, "บันทึกออเดอร์เรียบร้อย", Toast.LENGTH_SHORT).show()
-        finish()
+        saveOrderToFirebase(currentUser.uid, orderType, note) {
+            Toast.makeText(this, "บันทึกออเดอร์เรียบร้อย", Toast.LENGTH_SHORT).show()
+            finish()
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -188,7 +201,7 @@ class CartActivity : AppCompatActivity() {
         tvTotalPrice.text = String.format("%.2f", totalPrice)
     }
 
-    private fun saveOrderToFirebase(storeId: String, orderType: String, note: String) {
+    private fun saveOrderToFirebase(storeId: String, orderType: String, note: String, onSuccess: () -> Unit) {
         val orderData = hashMapOf(
             "storeId" to storeId,
             "orderType" to orderType,
@@ -205,27 +218,25 @@ class CartActivity : AppCompatActivity() {
             "timestamp" to Timestamp.now(),
             "status" to "completed"
         )
-
         db.collection("orders")
             .add(orderData)
             .addOnSuccessListener { documentReference ->
                 Log.d("CartActivity", "Order saved with ID: ${documentReference.id}")
+                onSuccess()
             }
             .addOnFailureListener { e ->
                 Log.e("CartActivity", "Error saving order", e)
+                Toast.makeText(this, "เกิดข้อผิดพลาดในการบันทึกออเดอร์: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
 
-    private fun printReceipt(storeId: String, orderType: String, note: String) {
-        // ดึงข้อมูลร้านค้า
+    private fun printReceipt(storeId: String, orderType: String, note: String, tableOrNote: String = "") {
         db.collection("stores").document(storeId).get()
             .addOnSuccessListener { storeDoc ->
                 if (storeDoc.exists()) {
                     val storeName = storeDoc.getString("storeName") ?: "ร้านค้า"
                     val storeAddress = storeDoc.getString("address") ?: "-"
                     val storePhone = storeDoc.getString("phone") ?: "-"
-
-                    // สร้างข้อมูลใบเสร็จ
                     val receiptItems = cartItems.map { item ->
                         val quantity = adapter.getQuantities()[cartItems.indexOf(item)] ?: 1
                         CartItem(
@@ -234,8 +245,6 @@ class CartActivity : AppCompatActivity() {
                             price = item.price
                         )
                     }
-
-                    // พิมพ์ใบเสร็จใน CoroutineScope
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
                             val printerManager = PrinterManager(this@CartActivity)
@@ -247,20 +256,20 @@ class CartActivity : AppCompatActivity() {
                                 totalAmount = totalPrice,
                                 cashReceived = totalPrice,
                                 change = 0.0,
-                                purpose = "ใบเสร็จ"
+                                purpose = "ใบเสร็จ",
+                                tableOrNote = tableOrNote
                             )
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(this@CartActivity, "พิมพ์ใบเสร็จเรียบร้อย", Toast.LENGTH_SHORT).show()
-                                // เคลียร์ตระกร้าและกลับไปหน้าเมนู
                                 cartItems.clear()
                                 adapter.notifyDataSetChanged()
                                 setResult(RESULT_OK)
                                 finish()
                             }
                         } catch (e: Exception) {
+                            Log.e("CartActivity", "Exception in printReceipt: ${e.message}", e)
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(this@CartActivity, "เกิดข้อผิดพลาดในการพิมพ์ใบเสร็จ: ${e.message}", Toast.LENGTH_LONG).show()
-                                // ถ้าเกิด Exception ให้เคลียร์ตระกร้าและกลับไปหน้าเมนูเลย
                                 cartItems.clear()
                                 adapter.notifyDataSetChanged()
                                 setResult(RESULT_OK)
@@ -347,3 +356,4 @@ class CartActivity : AppCompatActivity() {
         }
     }
 }
+

@@ -18,6 +18,24 @@
             android:layout_height="wrap_content" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- ปุ่มเลือกโลโก้ร้าน -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSelectLogo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="เลือกโลโก้ร้าน (PNG/JPG)" />
+
+    <!-- ตัวอย่างโลโก้ร้าน -->
+    <ImageView
+        android:id="@+id/imgLogoPreview"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="8dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="โลโก้ร้าน"
+        android:visibility="gone" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilPrinterPurpose"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"

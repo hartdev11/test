@@ -54,6 +54,8 @@ import kotlinx.coroutines.withContext
 import android.app.AlertDialog
 import android.net.Uri
 import android.content.Context
+import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.QuerySnapshot
 
 
 class CustomerMainActivity : AppCompatActivity() {
@@ -83,9 +85,10 @@ class CustomerMainActivity : AppCompatActivity() {
     private var isLoading = false
     private var isLastPage = false
     private var lastVisiblePost: com.google.firebase.firestore.DocumentSnapshot? = null
-    private val PAGE_SIZE = 10
-    private var totalCount = 0
+    private val PAGE_SIZE = 20 // ลดลงเพื่อให้โหลดเร็วขึ้น
+    private var currentProvince: String? = null
     private lateinit var loadingIndicator: ProgressBar
+    private var currentPage = 0
 
     // Auth State Listener
     private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
@@ -110,7 +113,7 @@ class CustomerMainActivity : AppCompatActivity() {
     // Activity Result Launcher
     private val createPostActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
-            fetchPosts()
+            fetchPostsOptimized(filter = "all", paginate = false)
         }
     }
 
@@ -121,7 +124,6 @@ class CustomerMainActivity : AppCompatActivity() {
     private var addPhotoButton: View? = null
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var currentProvince: String? = null
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -241,13 +243,24 @@ class CustomerMainActivity : AppCompatActivity() {
         chipAll?.setOnClickListener {
             chipAll.isChecked = true
             chipNearMe.isChecked = false
+            
+            // รีเซ็ต province filter
+            currentProvince = null
+            
+            // รีเซ็ต realtime listener เพื่อไม่ใช้ province filter
+            resetRealtimeListener()
+            
             showLoading()
-            fetchPosts()
+            fetchPostsOptimized(filter = "all", paginate = false)
         }
         chipNearMe?.setOnClickListener {
             chipAll.isChecked = false
             chipNearMe.isChecked = true
             showLoading()
+            
+            // เพิ่ม debug เพื่อตรวจสอบโพสต์ใน Firebase
+            debugCheckPostsInFirebase()
+            
             fetchCurrentProvince()
         }
 
@@ -276,16 +289,20 @@ class CustomerMainActivity : AppCompatActivity() {
         recyclerViewFeed.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                if (isLoading || isLastPage) return
+                
+                // ตรวจสอบเงื่อนไขต่างๆ ก่อน
+                if (isLoading || isLastPage || !isNetworkAvailable()) return
 
                 val layoutManager = recyclerView.layoutManager as LinearLayoutManager
                 val visibleItemCount = layoutManager.childCount
                 val totalItemCount = layoutManager.itemCount
                 val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
 
-                // ตรวจสอบว่าถึงจุดที่ควรโหลดเพิ่มหรือไม่
-                val isNearEnd = (visibleItemCount + firstVisibleItemPosition) >= totalItemCount
-                if (isNearEnd && totalCount >= PAGE_SIZE) {
+                // ตรวจสอบว่าถึงจุดที่ควรโหลดเพิ่มหรือไม่ (เมื่อเหลือ 3 รายการ)
+                val threshold = 3
+                val isNearEnd = (visibleItemCount + firstVisibleItemPosition) >= (totalItemCount - threshold)
+                
+                if (isNearEnd && postList.size >= PAGE_SIZE) {
                     loadMorePosts()
                 }
             }
@@ -295,7 +312,7 @@ class CustomerMainActivity : AppCompatActivity() {
         emptyFeedTextView = findViewById(R.id.emptyFeedTextView)
 
         // Fetch initial posts
-        fetchPosts(paginate = false)
+        fetchPostsOptimized(filter = "all", paginate = false)
         setupRealtimeListener()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -304,8 +321,12 @@ class CustomerMainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         auth.addAuthStateListener(authStateListener)
+        
         // Refresh feed on start to get latest data
-        refreshFeed()
+        // แต่ไม่ต้อง refresh ถ้ามีโพสต์อยู่แล้ว
+        if (postList.isEmpty()) {
+            refreshFeed()
+        }
     }
 
     override fun onStop() {
@@ -410,96 +431,115 @@ class CustomerMainActivity : AppCompatActivity() {
     }
 
     private fun setupRealtimeListener() {
-        // Listener สำหรับโพสต์
-        val postsListener = firestore.collection("posts")
+        // Listener สำหรับโพสต์ - ไม่ใช้ limit เพื่อให้เห็นโพสต์ทั้งหมด
+        var query = firestore.collection("posts")
             .orderBy("postTime", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    Log.w("CustomerMainActivity", "Posts listener failed.", e)
-                    return@addSnapshotListener
+        
+        // เพิ่ม province filter ถ้ามี
+        if (currentProvince != null) {
+            query = query.whereEqualTo("province", currentProvince)
+            Log.d("CustomerMainActivity", "Realtime listener applying province filter: $currentProvince")
+        } else {
+            Log.d("CustomerMainActivity", "Realtime listener: no province filter")
+        }
+        
+        val postsListener = query.addSnapshotListener { snapshot, e ->
+            if (e != null) {
+                Log.w("CustomerMainActivity", "Posts listener failed.", e)
+                // แสดง error state ถ้าไม่มีโพสต์อยู่แล้ว
+                if (postList.isEmpty()) {
+                    showError("เกิดข้อผิดพลาดในการโหลดข้อมูล\nกรุณาลองใหม่อีกครั้ง")
                 }
+                return@addSnapshotListener
+            }
 
-                if (snapshot != null && !snapshot.isEmpty) {
-                    val fetchedPosts = mutableListOf<Post>()
-                    val userIds = snapshot.documents.mapNotNull { it.getString("userId") }.toSet().toList()
+            if (snapshot != null && !snapshot.isEmpty) {
+                val fetchedPosts = mutableListOf<Post>()
+                val userIds = snapshot.documents.mapNotNull { it.getString("userId") }.toSet().toList()
 
-                    if (userIds.isNotEmpty()) {
-                        // โหลดข้อมูลผู้ใช้
-                        firestore.collection("users")
-                            .whereIn("userId", userIds)
-                            .get()
-                            .addOnSuccessListener { userDocuments ->
-                                val userMap = userDocuments.associate { it.getString("userId") to it.getString("nickname") }
+                if (userIds.isNotEmpty()) {
+                    // โหลดข้อมูลผู้ใช้
+                    firestore.collection("users")
+                        .whereIn("userId", userIds)
+                        .get()
+                        .addOnSuccessListener { userDocuments ->
+                            val userMap = userDocuments.associate { it.getString("userId") to it.getString("nickname") }
 
-                                // โหลดข้อมูลการบูสต์ทั้งหมด
-                                val boostTasks = snapshot.documents.map { doc ->
-                                    firestore.collection("postBoosts").document(doc.id).get()
+                            // โหลดข้อมูลการบูสต์ทั้งหมด
+                            val boostTasks = snapshot.documents.map { doc ->
+                                firestore.collection("postBoosts").document(doc.id).get()
+                            }
+
+                            Tasks.whenAllComplete(boostTasks).addOnSuccessListener {
+                                // ประมวลผลโพสต์พร้อมข้อมูลการบูสต์
+                                for (document in snapshot.documents) {
+                                    val post = document.toObject(Post::class.java)?.apply {
+                                        postId = document.id
+                                        this.nickname = userMap[this.userId]
+                                        
+                                        // ดึงข้อมูลการบูสต์
+                                        val boostDoc = boostTasks[snapshot.documents.indexOf(document)].result
+                                        if (boostDoc.exists()) {
+                                            val boostCount = boostDoc.getLong("boostCount")?.toInt() ?: 0
+                                            val boostedUsers = when (val users = boostDoc.get("boostedUsers")) {
+                                                is List<*> -> users.filterIsInstance<String>()
+                                                else -> emptyList()
+                                            }
+                                            this.boostCount = boostCount
+                                            this.isBoosted = currentUserId != null && boostedUsers.contains(currentUserId)
+                                        } else {
+                                            // ถ้าไม่มีข้อมูลการบูสต์ ให้สร้างใหม่
+                                            val initialData = hashMapOf(
+                                                "boostCount" to 0,
+                                                "boostedUsers" to listOf<String>()
+                                            )
+                                            firestore.collection("postBoosts").document(document.id)
+                                                .set(initialData)
+                                                .addOnSuccessListener {
+                                                    Log.d("CustomerMainActivity", "Created new boost document for post ${document.id}")
+                                                }
+                                                .addOnFailureListener { e ->
+                                                    Log.e("CustomerMainActivity", "Error creating boost document: ${e.message}")
+                                                }
+                                            this.boostCount = 0
+                                            this.isBoosted = false
+                                        }
+                                    }
+                                    post?.let { fetchedPosts.add(it) }
                                 }
 
-                                Tasks.whenAllComplete(boostTasks).addOnSuccessListener {
-                                    // ประมวลผลโพสต์พร้อมข้อมูลการบูสต์
-                                    for (document in snapshot.documents) {
-                                        val post = document.toObject(Post::class.java)?.apply {
-                                            postId = document.id
-                                            this.nickname = userMap[this.userId]
+                                // โหลดข้อมูลไลค์
+                                if (currentUserId != null) {
+                                    firestore.collection("likes")
+                                        .whereEqualTo("userId", currentUserId)
+                                        .get()
+                                        .addOnSuccessListener { likeDocuments ->
+                                            val likedPostIds = likeDocuments.map { it.getString("postId") }.toSet()
+                                            for (post in fetchedPosts) {
+                                                post.isLiked = post.postId != null && likedPostIds.contains(post.postId)
+                                            }
                                             
-                                            // ดึงข้อมูลการบูสต์
-                                            val boostDoc = boostTasks[snapshot.documents.indexOf(document)].result
-                                            if (boostDoc.exists()) {
-                                                val boostCount = boostDoc.getLong("boostCount")?.toInt() ?: 0
-                                                val boostedUsers = when (val users = boostDoc.get("boostedUsers")) {
-                                                    is List<*> -> users.filterIsInstance<String>()
-                                                    else -> emptyList()
-                                                }
-                                                this.boostCount = boostCount
-                                                this.isBoosted = currentUserId != null && boostedUsers.contains(currentUserId)
-                                            } else {
-                                                // ถ้าไม่มีข้อมูลการบูสต์ ให้สร้างใหม่
-                                                val initialData = hashMapOf(
-                                                    "boostCount" to 0,
-                                                    "boostedUsers" to listOf<String>()
-                                                )
-                                                firestore.collection("postBoosts").document(document.id)
-                                                    .set(initialData)
-                                                    .addOnSuccessListener {
-                                                        Log.d("CustomerMainActivity", "Created new boost document for post ${document.id}")
-                                                    }
-                                                    .addOnFailureListener { e ->
-                                                        Log.e("CustomerMainActivity", "Error creating boost document: ${e.message}")
-                                                    }
-                                                this.boostCount = 0
-                                                this.isBoosted = false
-                                            }
+                                            // เรียงลำดับและอัพเดท UI
+                                            updatePostsList(fetchedPosts, paginate = false)
                                         }
-                                        post?.let { fetchedPosts.add(it) }
-                                    }
-
-                                    // โหลดข้อมูลไลค์
-                                    if (currentUserId != null) {
-                                        firestore.collection("likes")
-                                            .whereEqualTo("userId", currentUserId)
-                                            .get()
-                                            .addOnSuccessListener { likeDocuments ->
-                                                val likedPostIds = likeDocuments.map { it.getString("postId") }.toSet()
-                                                for (post in fetchedPosts) {
-                                                    post.isLiked = post.postId != null && likedPostIds.contains(post.postId)
-                                                }
-                                                
-                                                // เรียงลำดับและอัพเดท UI
-                                                updatePostsList(fetchedPosts)
-                                            }
-                                    } else {
-                                        // อัพเดท UI โดยไม่มีข้อมูลไลค์
-                                        updatePostsList(fetchedPosts)
-                                    }
+                                } else {
+                                    // อัพเดท UI โดยไม่มีข้อมูลไลค์
+                                    updatePostsList(fetchedPosts, paginate = false)
                                 }
                             }
-                    } else {
-                        postList.clear()
-                        feedAdapter.submitList(postList.toList())
-                    }
+                        }
+                } else {
+                    postList.clear()
+                    feedAdapter.submitList(postList.toList())
+                    showEmptyState()
                 }
+            } else {
+                // ถ้าไม่มีโพสต์ ให้แสดงสถานะว่าง
+                postList.clear()
+                feedAdapter.submitList(postList.toList())
+                showEmptyState()
             }
+        }
 
         // Listener สำหรับการเปลี่ยนแปลงการบูสต์
         val boostListener = firestore.collection("postBoosts")
@@ -538,18 +578,21 @@ class CustomerMainActivity : AppCompatActivity() {
         listeners.add(boostListener)
     }
 
-    private fun updatePostsList(posts: List<Post>) {
-        // เรียงลำดับโพสต์
-        val sortedPosts = posts.sortedWith(
-            compareByDescending<Post> { it.isBoosted }
-                .thenByDescending { it.boostCount }
-                .thenByDescending { it.postTime }
-        )
+    private fun updatePostsList(posts: List<Post>, paginate: Boolean) {
+        // ซ่อน loading indicator
+        feedAdapter.setLoading(false)
         
-        // อัพเดท UI
-        postList.clear()
-        postList.addAll(sortedPosts)
+        if (paginate) {
+            postList.addAll(posts)
+        } else {
+            postList.clear()
+            postList.addAll(posts)
+        }
+        
         feedAdapter.submitList(postList.toList())
+        isLoading = false
+        swipeRefreshLayout.isRefreshing = false
+        showContent()
     }
 
     override fun onDestroy() {
@@ -560,204 +603,42 @@ class CustomerMainActivity : AppCompatActivity() {
     }
 
     private fun refreshFeed() {
-        if (!isNetworkAvailable()) {
-            Toast.makeText(this, "ไม่มีการเชื่อมต่ออินเทอร์เน็ต", Toast.LENGTH_SHORT).show()
-            swipeRefreshLayout.isRefreshing = false
-            return
+        Log.d("CustomerMainActivity", "Refreshing feed...")
+        isLastPage = false
+        currentPage = 0
+        
+        // Reset realtime listener
+        resetRealtimeListener()
+        
+        // Fetch posts with current filter
+        val filter = when {
+            chipNearMe.isChecked -> "nearMe"
+            else -> "all"
         }
-        // Clear adapter caches before refresh
-        feedAdapter.clearAllCaches()
-        fetchPosts(paginate = false)
-    }
-
-    private fun fetchPosts(filter: String? = null, paginate: Boolean = true, retryCount: Int = 0, provinceFilter: String? = null) {
-        try {
-            if (!isNetworkAvailable()) {
-                Toast.makeText(this, "ไม่มีการเชื่อมต่ออินเทอร์เน็ต", Toast.LENGTH_SHORT).show()
-                loadingIndicator.visibility = View.GONE
-                swipeRefreshLayout.isRefreshing = false
-                return
-            }
-
-            if (!paginate) {
-                showLoading()
-                postList.clear()
-                feedAdapter.notifyDataSetChanged()
-            }
-
-            isLoading = true
-            var query = firestore.collection("posts")
-                .orderBy("postTime", Query.Direction.DESCENDING)
-                .limit(PAGE_SIZE.toLong())
-
-            when (filter) {
-                "photo", "video", "article" -> query = query.whereEqualTo("type", filter)
-                else -> {} // ไม่ต้องกรองอะไรเพิ่มเติม
-            }
-
-            if (provinceFilter != null) {
-                query = query.whereEqualTo("province", provinceFilter)
-            }
-
-            if (paginate && lastVisiblePost != null) {
-                query = query.startAfter(lastVisiblePost!!)
-            }
-
-            query.get()
-                .addOnSuccessListener { documents ->
-                    try {
-                        if (!paginate) {
-                            postList.clear()
-                        }
-
-                        if (documents.isEmpty) {
-                            isLastPage = true
-                            if (postList.isEmpty()) {
-                                if (provinceFilter != null) {
-                                    showEmptyState("ยังไม่มีโพสต์ใดๆ ในจังหวัด $provinceFilter")
-                                } else {
-                                    showEmptyState() // Uses default message
-                                }
-                            }
-                            isLoading = false
-                            swipeRefreshLayout.isRefreshing = false
-                            return@addOnSuccessListener
-                        }
-
-                        lastVisiblePost = documents.documents.lastOrNull()
-                        val fetchedPosts = mutableListOf<Post>()
-                        
-                        documents.forEach { doc ->
-                            try {
-                                val post = doc.toObject(Post::class.java)
-                                post?.let { 
-                                    post.postId = doc.id
-                                    fetchedPosts.add(post)
-                                }
-                            } catch (e: Exception) {
-                                Log.e("CustomerMainActivity", "Error parsing post: ${e.message}")
-                            }
-                        }
-
-                        // Load boost data for all posts
-                        val boostTasks = fetchedPosts.mapNotNull { post ->
-                            val postId = post.postId ?: return@mapNotNull null
-                            firestore.collection("postBoosts").document(postId).get()
-                        }
-
-                        // Load like data
-                        val likeTask = if (currentUserId != null) {
-                            firestore.collection("likes")
-                                .whereEqualTo("userId", currentUserId)
-                                .get()
-                        } else null
-
-                        // Wait for all data to load before updating UI
-                        val allTasks = mutableListOf<Task<*>>().apply {
-                            addAll(boostTasks)
-                            likeTask?.let { add(it) }
-                        }
-
-                        if (allTasks.isEmpty()) {
-                            postList.addAll(fetchedPosts)
-                            feedAdapter.submitList(postList.toList())
-                            isLoading = false
-                            swipeRefreshLayout.isRefreshing = false
-                            showContent()
-                        } else {
-                            Tasks.whenAllComplete(allTasks).addOnSuccessListener {
-                                // Process boost data
-                                boostTasks.forEachIndexed { index, task ->
-                                    try {
-                                        val doc = task.result
-                                        val post = fetchedPosts[index]
-                                        val boostCount = doc.getLong("boostCount")?.toInt() ?: 0
-                                        val boostedUsers = when (val users = doc.get("boostedUsers")) {
-                                            is List<*> -> users.filterIsInstance<String>()
-                                            else -> emptyList()
-                                        }
-                                        post.boostCount = boostCount
-                                        post.isBoosted = currentUserId != null && boostedUsers.contains(currentUserId)
-                                    } catch (e: Exception) {
-                                        Log.e("CustomerMainActivity", "Error processing boost data: ${e.message}")
-                                    }
-                                }
-
-                                // Process like data
-                                likeTask?.let { task ->
-                                    try {
-                                        val likeDocuments = task.result
-                                        val likedPostIds = likeDocuments.map { it.getString("postId") }.toSet()
-                                        for (post in fetchedPosts) {
-                                            post.isLiked = post.postId != null && likedPostIds.contains(post.postId)
-                                        }
-                                    } catch (e: Exception) {
-                                        Log.e("CustomerMainActivity", "Error processing like data: ${e.message}")
-                                    }
-                                }
-
-                                // Sort posts by boost status and count
-                                fetchedPosts.sortWith(
-                                    compareByDescending<Post> { it.isBoosted }
-                                        .thenByDescending { it.boostCount }
-                                        .thenByDescending { it.postTime }
-                                )
-
-                                postList.addAll(fetchedPosts)
-                                feedAdapter.submitList(postList.toList())
-                                isLoading = false
-                                swipeRefreshLayout.isRefreshing = false
-                                showContent()
-                            }
-                            .addOnFailureListener { e ->
-                                Log.e("CustomerMainActivity", "Error waiting for tasks: ${e.message}")
-                                if (retryCount < 3) {
-                                    handler.postDelayed({
-                                        fetchPosts(filter, paginate, retryCount + 1, provinceFilter)
-                                    }, 1000)
-                                } else {
-                                    postList.addAll(fetchedPosts)
-                                    feedAdapter.submitList(postList.toList())
-                                    isLoading = false
-                                    swipeRefreshLayout.isRefreshing = false
-                                    showContent()
-                                    Toast.makeText(this, "เกิดข้อผิดพลาดในการโหลดข้อมูลบางส่วน", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Log.e("CustomerMainActivity", "Error processing posts: ${e.message}")
-                        handleFetchError(e, "Error processing posts", paginate)
-                    }
-                }
-                .addOnFailureListener { e ->
-                    if (retryCount < 3) {
-                        Log.w("CustomerMainActivity", "Retrying fetch posts (attempt ${retryCount + 1})")
-                        handler.postDelayed({
-                            fetchPosts(filter, paginate, retryCount + 1, provinceFilter)
-                        }, 1000)
-                    } else {
-                        handleFetchError(e, "Error fetching posts", paginate)
-                    }
-                }
-        } catch (e: Exception) {
-            handleFetchError(e, "Error in fetchPosts", paginate)
-        }
-    }
-
-    private fun handleFetchError(e: Exception, errorMessage: String, paginate: Boolean) {
-        Log.e("CustomerMainActivity", "$errorMessage: ${e.message}")
-        isLoading = false
-        swipeRefreshLayout.isRefreshing = false
-        if (!paginate && postList.isEmpty()) {
-            showEmptyState()
-        }
-        Toast.makeText(this, "เกิดข้อผิดพลาดในการโหลดข้อมูล", Toast.LENGTH_SHORT).show()
+        
+        fetchPostsOptimized(filter, paginate = false, provinceFilter = currentProvince)
     }
 
     private fun loadMorePosts() {
         if (isLoading || isLastPage) return
-        fetchPosts(paginate = true)
+        
+        // ตรวจสอบว่ามีโพสต์อยู่แล้วหรือไม่
+        if (postList.isEmpty()) {
+            // ถ้าไม่มีโพสต์ ให้โหลดใหม่แทนการ paginate
+            fetchPostsOptimized(filter = "all", paginate = false)
+            return
+        }
+        
+        // ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "ไม่มีการเชื่อมต่ออินเทอร์เน็ต", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        // แสดง loading indicator
+        feedAdapter.setLoading(true)
+        
+        fetchPostsOptimized(filter = "all", paginate = true)
     }
 
     private fun toggleLike(post: Post) {
@@ -942,6 +823,9 @@ class CustomerMainActivity : AppCompatActivity() {
         loadingIndicator.visibility = View.VISIBLE
         recyclerViewFeed.visibility = View.GONE
         emptyFeedTextView.visibility = View.GONE
+        
+        // ลบ click listener ออกจาก emptyFeedTextView เมื่อกำลังโหลด
+        emptyFeedTextView.setOnClickListener(null)
     }
 
     private fun showEmptyState(message: String? = null) {
@@ -949,20 +833,33 @@ class CustomerMainActivity : AppCompatActivity() {
         recyclerViewFeed.visibility = View.GONE
         emptyFeedTextView.text = message ?: getString(R.string.feed_empty)
         emptyFeedTextView.visibility = View.VISIBLE
+        
+        // เพิ่มปุ่มลองใหม่สำหรับ empty state
+        emptyFeedTextView.setOnClickListener {
+            refreshFeed()
+        }
     }
 
     private fun showContent() {
         loadingIndicator.visibility = View.GONE
         recyclerViewFeed.visibility = View.VISIBLE
         emptyFeedTextView.visibility = View.GONE
+        
+        // ลบ click listener ออกจาก emptyFeedTextView เมื่อแสดงเนื้อหา
+        emptyFeedTextView.setOnClickListener(null)
     }
 
     private fun showError(message: String) {
         try {
-            loadingProgressBar.visibility = View.GONE
+            loadingIndicator.visibility = View.GONE
             emptyFeedTextView.visibility = View.VISIBLE
             recyclerViewFeed.visibility = View.GONE
             emptyFeedTextView.text = message
+            
+            // เพิ่มปุ่มลองใหม่
+            emptyFeedTextView.setOnClickListener {
+                refreshFeed()
+            }
         } catch (e: Exception) {
             Log.e("CustomerMainActivity", "Error showing error state: ${e.message}")
         }
@@ -993,14 +890,13 @@ class CustomerMainActivity : AppCompatActivity() {
             onResult(isPremium)
         }
     }
-
-    private fun resetToAllFilter(errorMessage: String? = null) {
-        if (errorMessage != null) {
-            Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
-        }
+    private fun resetToAllFilter(message: String) {
         showContent()
         chipAll.isChecked = true
         chipNearMe.isChecked = false
+        
+        // โหลดโพสต์ทั้งหมดใหม่
+        fetchPostsOptimized(filter = "all", paginate = false)
     }
 
     private fun fetchCurrentProvince() {
@@ -1031,23 +927,39 @@ class CustomerMainActivity : AppCompatActivity() {
             if (location != null) {
                 getProvinceFromLocation(location)
             } else {
-                AlertDialog.Builder(this)
-                    .setTitle("ไม่พบตำแหน่งล่าสุด")
-                    .setMessage("ไม่สามารถดึงตำแหน่งปัจจุบันได้ กรุณารอสักครู่หรือขยับอุปกรณ์ แล้วลองใหม่อีกครั้ง")
-                    .setPositiveButton("ลองใหม่") { _, _ ->
-                        fetchCurrentProvince()
+                // เพิ่ม timeout สำหรับการรอตำแหน่ง
+                handler.postDelayed({
+                    if (currentProvince == null) {
+                        AlertDialog.Builder(this)
+                            .setTitle("ไม่พบตำแหน่งล่าสุด")
+                            .setMessage("ไม่สามารถดึงตำแหน่งปัจจุบันได้ กรุณารอสักครู่หรือขยับอุปกรณ์ แล้วลองใหม่อีกครั้ง")
+                            .setPositiveButton("ลองใหม่") { _, _ ->
+                                fetchCurrentProvince()
+                            }
+                            .setNegativeButton("ยกเลิก", null)
+                            .show()
+                        resetToAllFilter("ไม่สามารถดึงตำแหน่งปัจจุบันได้ กรุณาเปิด GPS และลองอีกครั้ง")
                     }
-                    .setNegativeButton("ยกเลิก", null)
-                    .show()
-                resetToAllFilter("ไม่สามารถดึงตำแหน่งปัจจุบันได้ กรุณาเปิด GPS และลองอีกครั้ง")
+                }, 10000) // รอ 10 วินาที
             }
-        }.addOnFailureListener {
+        }.addOnFailureListener { e ->
+            Log.e("CustomerMainActivity", "Error getting location: ${e.message}")
             resetToAllFilter("เกิดข้อผิดพลาดในการดึงตำแหน่ง")
         }
     }
 
     private fun getProvinceFromLocation(location: Location) {
         showLoading()
+        
+        // เพิ่ม timeout สำหรับการแปลงตำแหน่ง
+        val timeoutHandler = Handler(Looper.getMainLooper())
+        val timeoutRunnable = Runnable {
+            if (currentProvince == null) {
+                resetToAllFilter("การแปลงตำแหน่งใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง")
+            }
+        }
+        timeoutHandler.postDelayed(timeoutRunnable, 15000) // รอ 15 วินาที
+        
         try {
             val geocoder = Geocoder(this, Locale.getDefault())
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -1057,9 +969,11 @@ class CustomerMainActivity : AppCompatActivity() {
                     1,
                     object : Geocoder.GeocodeListener {
                         override fun onGeocode(addresses: List<Address>) {
+                            timeoutHandler.removeCallbacks(timeoutRunnable)
                             handleProvinceResult(addresses)
                         }
                         override fun onError(errorMessage: String?) {
+                            timeoutHandler.removeCallbacks(timeoutRunnable)
                             resetToAllFilter("เกิดข้อผิดพลาดในการแปลงตำแหน่งเป็นจังหวัด")
                         }
                     }
@@ -1071,10 +985,12 @@ class CustomerMainActivity : AppCompatActivity() {
                         @Suppress("DEPRECATION")
                         val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                         withContext(Dispatchers.Main) {
+                            timeoutHandler.removeCallbacks(timeoutRunnable)
                             handleProvinceResult(addresses)
                         }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
+                            timeoutHandler.removeCallbacks(timeoutRunnable)
                             resetToAllFilter("เกิดข้อผิดพลาดในการแปลงตำแหน่งเป็นจังหวัด")
                         }
                     }
@@ -1082,6 +998,7 @@ class CustomerMainActivity : AppCompatActivity() {
             }
         } catch (e: Exception) {
             // This initial catch is for Geocoder constructor, etc.
+            timeoutHandler.removeCallbacks(timeoutRunnable)
             resetToAllFilter("เกิดข้อผิดพลาดในการเตรียมแปลงตำแหน่ง")
         }
     }
@@ -1089,15 +1006,29 @@ class CustomerMainActivity : AppCompatActivity() {
     private fun handleProvinceResult(addresses: List<Address>?) {
         runOnUiThread {
             if (!addresses.isNullOrEmpty()) {
-                val province = addresses[0].adminArea
-                if (!province.isNullOrEmpty()) {
-                    currentProvince = province
-                    fetchPosts(provinceFilter = province)
-                    Toast.makeText(this, "แสดงฟีดในจังหวัด: $province", Toast.LENGTH_SHORT).show()
+                val rawProvince = addresses[0].adminArea
+                Log.d("CustomerMainActivity", "Raw detected province: $rawProvince")
+                
+                // แปลงชื่อจังหวัดให้เป็นรูปแบบมาตรฐาน
+                val normalizedProvince = normalizeProvinceName(rawProvince)
+                Log.d("CustomerMainActivity", "Normalized province: $normalizedProvince")
+                
+                if (!normalizedProvince.isNullOrEmpty()) {
+                    currentProvince = normalizedProvince
+                    Log.d("CustomerMainActivity", "Set currentProvince to: $currentProvince")
+                    
+                    // รีเซ็ต realtime listener เพื่อใช้ province filter ใหม่
+                    resetRealtimeListener()
+                    
+                    // โหลดโพสต์ใหม่
+                    fetchPostsOptimized(filter = "all", paginate = false, provinceFilter = normalizedProvince)
+                    Toast.makeText(this, "แสดงฟีดในจังหวัด: $normalizedProvince", Toast.LENGTH_SHORT).show()
                 } else {
+                    Log.e("CustomerMainActivity", "Normalized province is null or empty")
                     resetToAllFilter("ไม่พบข้อมูลจังหวัดจากตำแหน่งปัจจุบัน")
                 }
             } else {
+                Log.e("CustomerMainActivity", "No addresses found")
                 resetToAllFilter("ไม่สามารถหาข้อมูลที่อยู่จากตำแหน่งปัจจุบันได้")
             }
         }
@@ -1140,7 +1071,462 @@ class CustomerMainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    private fun resetRealtimeListener() {
+        // ยกเลิก listeners เดิม
+        listeners.forEach { it.remove() }
+        listeners.clear()
+        
+        // สร้าง listeners ใหม่
+        setupRealtimeListener()
+    }
+
+    private fun debugCheckPostsInFirebase() {
+        Log.d("CustomerMainActivity", "=== DEBUG: Checking posts in Firebase ===")
+        
+        // ตรวจสอบโพสต์ทั้งหมด
+        firestore.collection("posts")
+            .limit(10)
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d("CustomerMainActivity", "Found ${documents.size()} posts")
+                documents.forEach { doc ->
+                    val province = doc.getString("province")
+                    val postText = doc.getString("postText")
+                    Log.d("CustomerMainActivity", "Post ${doc.id}: province='$province', text='${postText?.take(50)}...'")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("CustomerMainActivity", "Error checking posts: ${e.message}")
+            }
+        
+        // ตรวจสอบโพสต์จากจังหวัดสระบุรีโดยเฉพาะ
+        firestore.collection("posts")
+            .whereEqualTo("province", "สระบุรี")
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d("CustomerMainActivity", "Found ${documents.size()} posts from สระบุรี")
+                documents.forEach { doc ->
+                    val postText = doc.getString("postText")
+                    Log.d("CustomerMainActivity", "สระบุรี post ${doc.id}: text='${postText?.take(50)}...'")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("CustomerMainActivity", "Error checking สระบุรี posts: ${e.message}")
+            }
+        
+        // ตรวจสอบโพสต์จากจังหวัด Saraburi (ภาษาอังกฤษ)
+        firestore.collection("posts")
+            .whereEqualTo("province", "Saraburi")
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d("CustomerMainActivity", "Found ${documents.size()} posts from Saraburi")
+                documents.forEach { doc ->
+                    val postText = doc.getString("postText")
+                    Log.d("CustomerMainActivity", "Saraburi post ${doc.id}: text='${postText?.take(50)}...'")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("CustomerMainActivity", "Error checking Saraburi posts: ${e.message}")
+            }
+        
+        // ตรวจสอบโพสต์ที่ไม่มี province field
+        firestore.collection("posts")
+            .whereEqualTo("province", null)
+            .limit(5)
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d("CustomerMainActivity", "Found ${documents.size()} posts with null province")
+                documents.forEach { doc ->
+                    val postText = doc.getString("postText")
+                    Log.d("CustomerMainActivity", "Null province post ${doc.id}: text='${postText?.take(50)}...'")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("CustomerMainActivity", "Error checking null province posts: ${e.message}")
+            }
+        
+        // ตรวจสอบโครงสร้างของโพสต์
+        firestore.collection("posts")
+            .limit(5)
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d("CustomerMainActivity", "Checking ${documents.size()} posts for province field structure")
+                documents.forEach { doc ->
+                    val province = doc.getString("province")
+                    val hasProvinceField = doc.contains("province")
+                    val postText = doc.getString("postText")
+                    Log.d("CustomerMainActivity", "Post ${doc.id}: hasProvinceField=$hasProvinceField, province='$province', text='${postText?.take(50)}...'")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("CustomerMainActivity", "Error checking posts structure: ${e.message}")
+            }
+    }
+
+    private fun normalizeProvinceName(province: String?): String? {
+        if (province.isNullOrEmpty()) return null
+        
+        // แปลงชื่อจังหวัดให้เป็นรูปแบบมาตรฐาน
+        return when (province.lowercase()) {
+            "saraburi", "สระบุรี" -> "สระบุรี"
+            "bangkok", "กรุงเทพมหานคร", "กรุงเทพฯ", "กรุงเทพ" -> "กรุงเทพมหานคร"
+            "nonthaburi", "นนทบุรี" -> "นนทบุรี"
+            "pathum thani", "pathum thani", "ปทุมธานี" -> "ปทุมธานี"
+            "samut prakan", "samut prakan", "สมุทรปราการ" -> "สมุทรปราการ"
+            "samut sakhon", "samut sakhon", "สมุทรสาคร" -> "สมุทรสาคร"
+            "nakhon pathom", "nakhon pathom", "นครปฐม" -> "นครปฐม"
+            "ayutthaya", "พระนครศรีอยุธยา", "อยุธยา" -> "พระนครศรีอยุธยา"
+            "ang thong", "ang thong", "อ่างทอง" -> "อ่างทอง"
+            "lop buri", "lop buri", "ลพบุรี" -> "ลพบุรี"
+            "sing buri", "sing buri", "สิงห์บุรี" -> "สิงห์บุรี"
+            "chai nat", "chai nat", "ชัยนาท" -> "ชัยนาท"
+            "suphan buri", "suphan buri", "สุพรรณบุรี" -> "สุพรรณบุรี"
+            "kanchanaburi", "กาญจนบุรี" -> "กาญจนบุรี"
+            "ratchaburi", "ราชบุรี" -> "ราชบุรี"
+            "phetchaburi", "เพชรบุรี" -> "เพชรบุรี"
+            "prachuap khiri khan", "prachuap khiri khan", "ประจวบคีรีขันธ์" -> "ประจวบคีรีขันธ์"
+            "chumphon", "ชุมพร" -> "ชุมพร"
+            "surat thani", "surat thani", "สุราษฎร์ธานี" -> "สุราษฎร์ธานี"
+            "nakhon si thammarat", "nakhon si thammarat", "นครศรีธรรมราช" -> "นครศรีธรรมราช"
+            "krabi", "กระบี่" -> "กระบี่"
+            "phang nga", "phang nga", "พังงา" -> "พังงา"
+            "phuket", "ภูเก็ต" -> "ภูเก็ต"
+            "ranong", "ระนอง" -> "ระนอง"
+            "trang", "ตรัง" -> "ตรัง"
+            "satun", "สตูล" -> "สตูล"
+            "songkhla", "สงขลา" -> "สงขลา"
+            "pattani", "ปัตตานี" -> "ปัตตานี"
+            "yala", "ยะลา" -> "ยะลา"
+            "narathiwat", "นราธิวาส" -> "นราธิวาส"
+            "chachoengsao", "ฉะเชิงเทรา" -> "ฉะเชิงเทรา"
+            "chon buri", "chon buri", "ชลบุรี" -> "ชลบุรี"
+            "rayong", "ระยอง" -> "ระยอง"
+            "chanthaburi", "จันทบุรี" -> "จันทบุรี"
+            "trat", "ตราด" -> "ตราด"
+            "chaiyaphum", "ชัยภูมิ" -> "ชัยภูมิ"
+            "nakhon ratchasima", "nakhon ratchasima", "นครราชสีมา" -> "นครราชสีมา"
+            "buri ram", "buri ram", "บุรีรัมย์" -> "บุรีรัมย์"
+            "surin", "สุรินทร์" -> "สุรินทร์"
+            "si sa ket", "si sa ket", "ศรีสะเกษ" -> "ศรีสะเกษ"
+            "ubon ratchathani", "ubon ratchathani", "อุบลราชธานี" -> "อุบลราชธานี"
+            "yasothon", "ยโสธร" -> "ยโสธร"
+            "amnat charoen", "amnat charoen", "อำนาจเจริญ" -> "อำนาจเจริญ"
+            "mukdahan", "มุกดาหาร" -> "มุกดาหาร"
+            "nong khai", "nong khai", "หนองคาย" -> "หนองคาย"
+            "bueng kan", "bueng kan", "บึงกาฬ" -> "บึงกาฬ"
+            "nong bua lam phu", "nong bua lam phu", "หนองบัวลำภู" -> "หนองบัวลำภู"
+            "udon thani", "udon thani", "อุดรธานี" -> "อุดรธานี"
+            "sakon nakhon", "sakon nakhon", "สกลนคร" -> "สกลนคร"
+            "nakhon phanom", "nakhon phanom", "นครพนม" -> "นครพนม"
+            "kalasin", "กาฬสินธุ์" -> "กาฬสินธุ์"
+            "maha sarakham", "maha sarakham", "มหาสารคาม" -> "มหาสารคาม"
+            "roi et", "roi et", "ร้อยเอ็ด" -> "ร้อยเอ็ด"
+            "khon kaen", "khon kaen", "ขอนแก่น" -> "ขอนแก่น"
+            "loei", "เลย" -> "เลย"
+            "nong bua lamphu", "nong bua lamphu", "หนองบัวลำภู" -> "หนองบัวลำภู"
+            "udonthani", "udonthani", "อุดรธานี" -> "อุดรธานี"
+            "sakonnakhon", "sakonnakhon", "สกลนคร" -> "สกลนคร"
+            "nakhonphanom", "nakhonphanom", "นครพนม" -> "นครพนม"
+            "kalasin", "กาฬสินธุ์" -> "กาฬสินธุ์"
+            "mahasarakham", "mahasarakham", "มหาสารคาม" -> "มหาสารคาม"
+            "roiet", "roiet", "ร้อยเอ็ด" -> "ร้อยเอ็ด"
+            "khonkaen", "khonkaen", "ขอนแก่น" -> "ขอนแก่น"
+            "phitsanulok", "พิษณุโลก" -> "พิษณุโลก"
+            "phichit", "พิจิตร" -> "พิจิตร"
+            "phetchabun", "เพชรบูรณ์" -> "เพชรบูรณ์"
+            "kamphaeng phet", "kamphaeng phet", "กำแพงเพชร" -> "กำแพงเพชร"
+            "tak", "ตาก" -> "ตาก"
+            "sukhothai", "สุโขทัย" -> "สุโขทัย"
+            "uttaradit", "อุตรดิตถ์" -> "อุตรดิตถ์"
+            "phrae", "แพร่" -> "แพร่"
+            "nan", "น่าน" -> "น่าน"
+            "lampang", "ลำปาง" -> "ลำปาง"
+            "lamphun", "ลำพูน" -> "ลำพูน"
+            "chiang mai", "chiang mai", "เชียงใหม่" -> "เชียงใหม่"
+            "chiang rai", "chiang rai", "เชียงราย" -> "เชียงราย"
+            "phayao", "พะเยา" -> "พะเยา"
+            "mae hong son", "mae hong son", "แม่ฮ่องสอน" -> "แม่ฮ่องสอน"
+            "nakhon sawan", "nakhon sawan", "นครสวรรค์" -> "นครสวรรค์"
+            "uthai thani", "uthai thani", "อุทัยธานี" -> "อุทัยธานี"
+            "chainat", "chainat", "ชัยนาท" -> "ชัยนาท"
+            "suphanburi", "suphanburi", "สุพรรณบุรี" -> "สุพรรณบุรี"
+            "kanchanaburi", "กาญจนบุรี" -> "กาญจนบุรี"
+            "ratchaburi", "ราชบุรี" -> "ราชบุรี"
+            "phetchaburi", "เพชรบุรี" -> "เพชรบุรี"
+            "prachuapkhirikhan", "prachuapkhirikhan", "ประจวบคีรีขันธ์" -> "ประจวบคีรีขันธ์"
+            "chumphon", "ชุมพร" -> "ชุมพร"
+            "suratthani", "suratthani", "สุราษฎร์ธานี" -> "สุราษฎร์ธานี"
+            "nakhonsithammarat", "nakhonsithammarat", "นครศรีธรรมราช" -> "นครศรีธรรมราช"
+            "krabi", "กระบี่" -> "กระบี่"
+            "phangnga", "phangnga", "พังงา" -> "พังงา"
+            "phuket", "ภูเก็ต" -> "ภูเก็ต"
+            "ranong", "ระนอง" -> "ระนอง"
+            "trang", "ตรัง" -> "ตรัง"
+            "satun", "สตูล" -> "สตูล"
+            "songkhla", "สงขลา" -> "สงขลา"
+            "pattani", "ปัตตานี" -> "ปัตตานี"
+            "yala", "ยะลา" -> "ยะลา"
+            "narathiwat", "นราธิวาส" -> "นราธิวาส"
+            "chachoengsao", "ฉะเชิงเทรา" -> "ฉะเชิงเทรา"
+            "chonburi", "chonburi", "ชลบุรี" -> "ชลบุรี"
+            "rayong", "ระยอง" -> "ระยอง"
+            "chanthaburi", "จันทบุรี" -> "จันทบุรี"
+            "trat", "ตราด" -> "ตราด"
+            "chaiyaphum", "ชัยภูมิ" -> "ชัยภูมิ"
+            "nakhonratchasima", "nakhonratchasima", "นครราชสีมา" -> "นครราชสีมา"
+            "buriram", "buriram", "บุรีรัมย์" -> "บุรีรัมย์"
+            "surin", "สุรินทร์" -> "สุรินทร์"
+            "sisaket", "sisaket", "ศรีสะเกษ" -> "ศรีสะเกษ"
+            "ubonratchathani", "ubonratchathani", "อุบลราชธานี" -> "อุบลราชธานี"
+            "yasothon", "ยโสธร" -> "ยโสธร"
+            "amnatcharoen", "amnatcharoen", "อำนาจเจริญ" -> "อำนาจเจริญ"
+            "mukdahan", "มุกดาหาร" -> "มุกดาหาร"
+            "nongkhai", "nongkhai", "หนองคาย" -> "หนองคาย"
+            "buengkan", "buengkan", "บึงกาฬ" -> "บึงกาฬ"
+            "nongbualamphu", "nongbualamphu", "หนองบัวลำภู" -> "หนองบัวลำภู"
+            "udonthani", "udonthani", "อุดรธานี" -> "อุดรธานี"
+            "sakonnakhon", "sakonnakhon", "สกลนคร" -> "สกลนคร"
+            "nakhonphanom", "nakhonphanom", "นครพนม" -> "นครพนม"
+            "kalasin", "กาฬสินธุ์" -> "กาฬสินธุ์"
+            "mahasarakham", "mahasarakham", "มหาสารคาม" -> "มหาสารคาม"
+            "roiet", "roiet", "ร้อยเอ็ด" -> "ร้อยเอ็ด"
+            "khonkaen", "khonkaen", "ขอนแก่น" -> "ขอนแก่น"
+            "loei", "เลย" -> "เลย"
+            "phitsanulok", "พิษณุโลก" -> "พิษณุโลก"
+            "phichit", "พิจิตร" -> "พิจิตร"
+            "phetchabun", "เพชรบูรณ์" -> "เพชรบูรณ์"
+            "kamphaengphet", "kamphaengphet", "กำแพงเพชร" -> "กำแพงเพชร"
+            "tak", "ตาก" -> "ตาก"
+            "sukhothai", "สุโขทัย" -> "สุโขทัย"
+            "uttaradit", "อุตรดิตถ์" -> "อุตรดิตถ์"
+            "phrae", "แพร่" -> "แพร่"
+            "nan", "น่าน" -> "น่าน"
+            "lampang", "ลำปาง" -> "ลำปาง"
+            "lamphun", "ลำพูน" -> "ลำพูน"
+            "chiangmai", "chiangmai", "เชียงใหม่" -> "เชียงใหม่"
+            "chiangrai", "chiangrai", "เชียงราย" -> "เชียงราย"
+            "phayao", "พะเยา" -> "พะเยา"
+            "maehongson", "maehongson", "แม่ฮ่องสอน" -> "แม่ฮ่องสอน"
+            "nakhonsawan", "nakhonsawan", "นครสวรรค์" -> "นครสวรรค์"
+            "uthaithani", "uthaithani", "อุทัยธานี" -> "อุทัยธานี"
+            else -> province // ถ้าไม่ตรงกับที่กำหนดไว้ ให้ใช้ชื่อเดิม
+        }
+    }
+
+    private fun checkIfAnyPostsHaveProvinceField(targetProvince: String) {
+        // ตรวจสอบว่ามีโพสต์ที่มี province field หรือไม่
+        firestore.collection("posts")
+            .limit(10)
+            .get()
+            .addOnSuccessListener { documents ->
+                val postsWithProvince = documents.filter { doc -> doc.contains("province") }
+                val postsWithoutProvince = documents.filter { doc -> !doc.contains("province") }
+                
+                Log.d("CustomerMainActivity", "Found ${postsWithProvince.size} posts with province field")
+                Log.d("CustomerMainActivity", "Found ${postsWithoutProvince.size} posts without province field")
+                
+                if (postsWithProvince.isEmpty()) {
+                    // ถ้าไม่มีโพสต์ที่มี province field เลย แสดงข้อความแจ้งเตือน
+                    showEmptyState("โพสต์เก่าไม่มีข้อมูลจังหวัด\nกรุณาลองโพสต์ใหม่เพื่อใช้ฟีเจอร์ 'ใกล้ฉัน'")
+                    Toast.makeText(this, "โพสต์เก่าไม่มีข้อมูลจังหวัด กรุณาลองโพสต์ใหม่", Toast.LENGTH_LONG).show()
+                } else {
+                    // ถ้ามีโพสต์ที่มี province field แต่ไม่มีโพสต์จากจังหวัดที่ต้องการ
+                    showEmptyState("ยังไม่มีโพสต์ใดๆ ในจังหวัด $targetProvince")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("CustomerMainActivity", "Error checking posts structure: ${e.message}")
+                showEmptyState("ยังไม่มีโพสต์ใดๆ ในจังหวัด $targetProvince")
+            }
+    }
+
+    // Optimized Firebase queries with batch operations
+    private fun fetchPostsOptimized(filter: String = "all", paginate: Boolean = false, retryCount: Int = 0, provinceFilter: String? = null) {
+        if (isLoading && !paginate) return
+        isLoading = true
+        
+        try {
+            val query = when (filter) {
+                "nearMe" -> {
+                    if (provinceFilter != null) {
+                        firestore.collection("posts")
+                            .whereEqualTo("province", provinceFilter)
+                            .orderBy("postTime", Query.Direction.DESCENDING)
+                            .limit(PAGE_SIZE.toLong())
+                    } else {
+                        firestore.collection("posts")
+                            .orderBy("postTime", Query.Direction.DESCENDING)
+                            .limit(PAGE_SIZE.toLong())
+                    }
+                }
+                else -> {
+                    firestore.collection("posts")
+                        .orderBy("postTime", Query.Direction.DESCENDING)
+                        .limit(PAGE_SIZE.toLong())
+                }
+            }
+
+            query.get()
+                .addOnSuccessListener { snapshot ->
+                    try {
+                        val fetchedPosts = mutableListOf<Post>()
+                        
+                        // Parse posts
+                        for (document in snapshot.documents) {
+                            try {
+                                val post = document.toObject(Post::class.java)?.apply {
+                                    postId = document.id
+                                }
+                                post?.let { fetchedPosts.add(it) }
+                            } catch (e: Exception) {
+                                Log.e("CustomerMainActivity", "Error parsing post: ${e.message}")
+                            }
+                        }
+
+                        // Batch load all related data
+                        loadRelatedDataBatch(fetchedPosts, paginate, provinceFilter)
+                        
+                    } catch (e: Exception) {
+                        Log.e("CustomerMainActivity", "Error processing posts: ${e.message}")
+                        handleFetchError(e, "Error processing posts", paginate)
+                    }
+                }
+                .addOnFailureListener { e ->
+                    if (retryCount < 3) {
+                        Log.w("CustomerMainActivity", "Retrying fetch posts (attempt ${retryCount + 1})")
+                        handler.postDelayed({
+                            fetchPostsOptimized(filter = filter, paginate = paginate, retryCount = retryCount + 1, provinceFilter = provinceFilter)
+                        }, 1000)
+                    } else {
+                        handleFetchError(e, "Error fetching posts", paginate)
+                    }
+                }
+        } catch (e: Exception) {
+            handleFetchError(e, "Error in fetchPostsOptimized", paginate)
+        }
+    }
+
+    // Overloaded function without parameters
+    // private fun fetchPostsOptimized() {
+    //     fetchPostsOptimized(filter = "all", paginate = false)
+    // }
+
+    private fun loadRelatedDataBatch(posts: List<Post>, paginate: Boolean, provinceFilter: String?) {
+        if (posts.isEmpty()) {
+            updatePostsList(posts, paginate)
+            return
+        }
+
+        val postIds = posts.mapNotNull { it.postId }
+        val userIds = posts.mapNotNull { it.userId }.distinct()
+        
+        // Create batch queries
+        val batchTasks = mutableListOf<Task<*>>()
+        
+        // Batch load boost data
+        if (postIds.isNotEmpty()) {
+            val boostQuery = firestore.collection("postBoosts")
+                .whereIn(FieldPath.documentId(), postIds)
+            batchTasks.add(boostQuery.get())
+        }
+        
+        // Batch load like data
+        if (currentUserId != null) {
+            val likeQuery = firestore.collection("likes")
+                .whereEqualTo("userId", currentUserId)
+                .whereIn("postId", postIds)
+            batchTasks.add(likeQuery.get())
+        }
+        
+        // Batch load user data
+        if (userIds.isNotEmpty()) {
+            val userQuery = firestore.collection("users")
+                .whereIn(FieldPath.documentId(), userIds)
+            batchTasks.add(userQuery.get())
+        }
+        
+        // Execute all batch queries
+        if (batchTasks.isEmpty()) {
+            updatePostsList(posts, paginate)
+        } else {
+            Tasks.whenAllComplete(batchTasks).addOnSuccessListener {
+                processBatchData(posts, batchTasks, paginate)
+            }.addOnFailureListener { e ->
+                Log.e("CustomerMainActivity", "Error in batch queries: ${e.message}")
+                updatePostsList(posts, paginate)
+            }
+        }
+    }
+
+    private fun processBatchData(posts: List<Post>, tasks: List<Task<*>>, paginate: Boolean) {
+        try {
+            // Process boost data
+            if (tasks.isNotEmpty() && tasks[0].isSuccessful) {
+                val boostSnapshot = tasks[0].result as QuerySnapshot
+                val boostMap = boostSnapshot.documents.associate { 
+                    it.id to (it.getLong("boostCount")?.toInt() ?: 0) 
+                }
+                
+                posts.forEach { post ->
+                    post.boostCount = boostMap[post.postId] ?: 0
+                }
+            }
+            
+            // Process like data
+            if (tasks.size > 1 && tasks[1].isSuccessful) {
+                val likeSnapshot = tasks[1].result as QuerySnapshot
+                val likedPostIds = likeSnapshot.documents.map { it.getString("postId") }.toSet()
+                
+                posts.forEach { post ->
+                    post.isLiked = post.postId != null && likedPostIds.contains(post.postId)
+                }
+            }
+            
+            // Process user data
+            if (tasks.size > 2 && tasks[2].isSuccessful) {
+                val userSnapshot = tasks[2].result as QuerySnapshot
+                val userMap = userSnapshot.documents.associate { 
+                    it.id to (it.getString("nickname") ?: it.getString("displayName") ?: "ไม่พบชื่อ") 
+                }
+                
+                posts.forEach { post ->
+                    post.nickname = userMap[post.userId]
+                }
+            }
+            
+            // Sort and update
+            val sortedPosts = posts.sortedWith(
+                compareByDescending<Post> { it.isBoosted }
+                    .thenByDescending { it.boostCount }
+                    .thenByDescending { it.postTime }
+            )
+            
+            updatePostsList(sortedPosts, paginate)
+            
+        } catch (e: Exception) {
+            Log.e("CustomerMainActivity", "Error processing batch data: ${e.message}")
+            updatePostsList(posts, paginate)
+        }
+    }
+
+    private fun handleFetchError(e: Exception, errorMessage: String, paginate: Boolean) {
+        Log.e("CustomerMainActivity", "$errorMessage: ${e.message}")
+        isLoading = false
+        swipeRefreshLayout.isRefreshing = false
+        feedAdapter.setLoading(false)
+        
+        if (!paginate && postList.isEmpty()) {
+            showEmptyState("เกิดข้อผิดพลาดในการโหลดข้อมูล\nกรุณาลองใหม่อีกครั้ง")
+        } else if (paginate) {
+            // สำหรับ pagination error ให้แสดง toast เท่านั้น
+            Toast.makeText(this, "เกิดข้อผิดพลาดในการโหลดข้อมูลเพิ่มเติม", Toast.LENGTH_SHORT).show()
+        } else {
+            showError("เกิดข้อผิดพลาดในการโหลดข้อมูล\nกรุณาลองใหม่อีกครั้ง")
+        }
+    }
 }
+
 
 
 
