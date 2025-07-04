@@ -9,12 +9,12 @@ plugins {
 
 android {
     namespace = "com.natthasethstudio.sethpos"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.natthasethstudio.sethpos"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 5
         versionName = "2.1"
 
@@ -86,11 +86,11 @@ dependencies {
     // Google Play Services
     implementation("com.google.android.gms:play-services-auth:20.7.0")
     implementation("com.google.android.gms:play-services-base:18.2.0")
-    implementation("com.google.android.gms:play-services-tasks:18.0.2")
+    implementation("com.google.android.gms:play-services-tasks:18.2.0")
 
     // Google Play Billing Library
-    implementation("com.android.billingclient:billing-ktx:6.1.0")
-    implementation("com.android.billingclient:billing:6.1.0")
+    implementation("com.android.billingclient:billing-ktx:6.2.0")
+    implementation("com.android.billingclient:billing:6.2.0")
 
     // ZXing for QR code generation
     implementation("com.google.zxing:core:3.5.2")
@@ -112,7 +112,7 @@ dependencies {
     // CircleImageView for circular images
     implementation("de.hdodenhof:circleimageview:3.1.0")
 
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.6")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.6")
@@ -122,7 +122,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 

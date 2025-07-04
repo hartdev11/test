@@ -36,9 +36,15 @@ class LoginActivity : AppCompatActivity() {
             if (result.resultCode == RESULT_OK) {
                 val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                 try {
-                    val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)!!
-                    Log.d("LoginActivity", "Google Sign-In successful for: ${account.email}")
-                    firebaseAuthWithGoogle(account.idToken!!)
+                    val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
+                    account?.let {
+                        Log.d("LoginActivity", "Google Sign-In successful for: ${it.email}")
+                        firebaseAuthWithGoogle(it.idToken ?: "")
+                    } ?: run {
+                        Log.e("LoginActivity", "Account is null")
+                        Toast.makeText(this, "ไม่สามารถเข้าสู่ระบบได้: บัญชีไม่ถูกต้อง", Toast.LENGTH_LONG).show()
+                        progressBar.visibility = View.GONE
+                    }
                 } catch (e: com.google.android.gms.common.api.ApiException) {
                     Log.e("LoginActivity", "Google sign in failed", e)
                     val errorMessage = when (e.statusCode) {
@@ -100,26 +106,31 @@ class LoginActivity : AppCompatActivity() {
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        val userId = auth.currentUser?.uid ?: ""
-                        db.collection("users").document(userId).get()
-                            .addOnSuccessListener { document ->
-                                progressBar.visibility = View.GONE
-                                if (document != null && document.exists()) {
-                                    val role = document.getString("role") ?: "customer"
-                                    if (role == "merchant") {
-                                        startActivity(Intent(this, MainActivity::class.java))
+                        val user = auth.currentUser
+                        user?.let { user ->
+                            val userId = user.uid
+                            db.collection("users").document(userId).get()
+                                .addOnSuccessListener { document ->
+                                    progressBar.visibility = View.GONE
+                                    if (document != null && document.exists()) {
+                                        val role = document.getString("role") ?: "customer"
+                                        startActivity(Intent(this, when (role) {
+                                            "merchant" -> MainActivity::class.java
+                                            else -> CustomerMainActivity::class.java
+                                        }))
+                                        finish()
                                     } else {
-                                        startActivity(Intent(this, CustomerMainActivity::class.java))
+                                        Toast.makeText(this, "ไม่พบข้อมูลผู้ใช้", Toast.LENGTH_SHORT).show()
                                     }
-                                    finish()
-                                } else {
-                                    Toast.makeText(this, "ไม่พบข้อมูลผู้ใช้", Toast.LENGTH_SHORT).show()
                                 }
-                            }
-                            .addOnFailureListener { e ->
-                                progressBar.visibility = View.GONE
-                                Toast.makeText(this, "โหลดข้อมูลผู้ใช้ล้มเหลว: ${e.message}", Toast.LENGTH_LONG).show()
-                            }
+                                .addOnFailureListener { e ->
+                                    progressBar.visibility = View.GONE
+                                    Toast.makeText(this, "โหลดข้อมูลผู้ใช้ล้มเหลว: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                        } ?: run {
+                            progressBar.visibility = View.GONE
+                            Toast.makeText(this, "ไม่สามารถเข้าสู่ระบบได้: ไม่พบผู้ใช้", Toast.LENGTH_SHORT).show()
+                        }
                     } else {
                         progressBar.visibility = View.GONE
                         val exception = task.exception
@@ -195,28 +206,29 @@ class LoginActivity : AppCompatActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    db.collection("users").document(user?.uid!!).get()
-                        .addOnSuccessListener { document ->
-                            if (!document.exists()) {
-                                progressBar.visibility = View.GONE
-                                startActivity(Intent(this, RoleSelectionActivity::class.java))
-                                finish()
-                            } else {
-                                val role = document.getString("role") ?: "customer"
-                                progressBar.visibility = View.GONE
-                                if (role == "merchant") {
-                                    startActivity(Intent(this, MainActivity::class.java))
+                    user?.let { user ->
+                        db.collection("users").document(user.uid).get()
+                            .addOnSuccessListener { document ->
+                                if (!document.exists()) {
+                                    progressBar.visibility = View.GONE
+                                    startActivity(Intent(this, RoleSelectionActivity::class.java))
+                                    finish()
                                 } else {
-                                    startActivity(Intent(this, CustomerMainActivity::class.java))
+                                    val role = document.getString("role") ?: "customer"
+                                    if (role == "merchant") {
+                                        startActivity(Intent(this, MainActivity::class.java))
+                                    } else {
+                                        startActivity(Intent(this, CustomerMainActivity::class.java))
+                                    }
+                                    finish()
                                 }
-                                finish()
                             }
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("LoginActivity", "Error checking user in Firestore: ${e.message}")
-                            Toast.makeText(this, "Error checking user: ${e.message}", Toast.LENGTH_LONG).show()
-                            progressBar.visibility = View.GONE
-                        }
+                            .addOnFailureListener { e ->
+                                Log.e("LoginActivity", "Error checking user in Firestore: ${e.message}")
+                                Toast.makeText(this, "Error checking user: ${e.message}", Toast.LENGTH_LONG).show()
+                                progressBar.visibility = View.GONE
+                            }
+                    }
                 } else {
                     Log.e("LoginActivity", "Firebase authentication with Google failed", task.exception)
                     Toast.makeText(this, "Firebase authentication failed: ${task.exception?.localizedMessage}", Toast.LENGTH_SHORT).show()
@@ -238,10 +250,10 @@ class LoginActivity : AppCompatActivity() {
                 packageInfo.signingInfo?.apkContentsSigners ?: emptyArray()
             } else {
                 @Suppress("DEPRECATION")
-                packageInfo.signatures
+                packageInfo.signatures ?: emptyArray()
             }
             
-            for (signature in signatures) {
+            signatures.forEach { signature ->
                 val md = java.security.MessageDigest.getInstance("SHA1")
                 md.update(signature.toByteArray())
                 val digest = md.digest()

@@ -26,8 +26,8 @@ class SubscriptionActivity : AppCompatActivity() {
     private lateinit var yearlyPlanCard: View
 
     // ใช้ product ID ที่แตกต่างจากฝั่งลูกค้า
-    private val monthlyProductId = "store_premium_monthly"
-    private val yearlyProductId = "store_premium_yearly"
+    private val monthlyProductId = "premium_monthly"
+    private val yearlyProductId = "store_yearly"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -228,7 +228,7 @@ class SubscriptionActivity : AppCompatActivity() {
     private fun checkSubscriptionStatus() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = FirebaseFirestore.getInstance()
-        
+
         db.collection("premium_stores").document(userId)
             .get()
             .addOnSuccessListener { document ->
@@ -236,26 +236,26 @@ class SubscriptionActivity : AppCompatActivity() {
                     val isPremium = document.getBoolean("isPremium") ?: false
                     val purchaseTime = document.getLong("purchaseTime") ?: 0
                     val subscriptionId = document.getString("subscriptionId") ?: ""
-                    
+
                     if (isPremium && subscriptionId.isNotEmpty()) {
                         val params = QueryPurchasesParams.newBuilder()
                             .setProductType(BillingClient.ProductType.SUBS)
                             .build()
-                            
+
                         billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
                             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                                val isStillValid = purchases.any { 
-                                    it.products.contains(subscriptionId) && 
+                                val isStillValid = purchases.any {
+                                    it.products.contains(subscriptionId) &&
                                     it.purchaseState == Purchase.PurchaseState.PURCHASED
                                 }
-                                
+
                                 if (!isStillValid) {
                                     val premiumData = hashMapOf(
                                         "isPremium" to false,
                                         "subscriptionId" to subscriptionId,
                                         "expirationTime" to System.currentTimeMillis()
                                     )
-                                    
+
                                     db.collection("premium_stores").document(userId)
                                         .set(premiumData)
                                         .addOnSuccessListener {
@@ -292,4 +292,4 @@ class SubscriptionActivity : AppCompatActivity() {
         super.onResume()
         checkSubscriptionStatus()
     }
-} 
+}

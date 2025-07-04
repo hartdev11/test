@@ -233,7 +233,7 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
     private fun checkSubscriptionStatus() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = FirebaseFirestore.getInstance()
-        
+
         db.collection("premium_users").document(userId)
             .get()
             .addOnSuccessListener { document ->
@@ -241,20 +241,20 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
                     val isPremium = document.getBoolean("isPremium") ?: false
                     val purchaseTime = document.getLong("purchaseTime") ?: 0
                     val subscriptionId = document.getString("subscriptionId") ?: ""
-                    
+
                     // ตรวจสอบการหมดอายุ
                     if (isPremium && subscriptionId.isNotEmpty()) {
                         val params = QueryPurchasesParams.newBuilder()
                             .setProductType(BillingClient.ProductType.SUBS)
                             .build()
-                            
+
                         billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
                             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                                val isStillValid = purchases.any { 
-                                    it.products.contains(subscriptionId) && 
-                                    it.purchaseState == Purchase.PurchaseState.PURCHASED
+                                val isStillValid = purchases.any {
+                                    it.products.contains(subscriptionId) &&
+                                            it.purchaseState == Purchase.PurchaseState.PURCHASED
                                 }
-                                
+
                                 if (!isStillValid) {
                                     // อัพเดทสถานะเป็นหมดอายุ
                                     val premiumData = hashMapOf(
@@ -262,7 +262,7 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
                                         "subscriptionId" to subscriptionId,
                                         "expirationTime" to System.currentTimeMillis()
                                     )
-                                    
+
                                     db.collection("premium_users").document(userId)
                                         .set(premiumData)
                                         .addOnSuccessListener {
