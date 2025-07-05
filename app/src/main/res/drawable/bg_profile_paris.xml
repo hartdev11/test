@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="400dp"
+            android:height="200dp"
+            android:viewportWidth="400"
+            android:viewportHeight="200">
+            
+            <!-- พื้นหลังหลัก - สีฟ้าอ่อน -->
+            <path
+                android:fillColor="#E6F3FF"
+                android:pathData="M0,0 L400,0 L400,200 L0,200 Z"/>
+            
+            <!-- ท้องฟ้า gradient -->
+            <path
+                android:fillColor="#FFE6F3"
+                android:pathData="M0,0 L400,0 L400,80 L0,80 Z"/>
+            
+            <!-- หอไอเฟล -->
+            <path
+                android:fillColor="#8B4513"
+                android:pathData="M180,150 L220,150 L220,200 L180,200 Z"/>
+            <path
+                android:fillColor="#8B4513"
+                android:pathData="M190,140 L210,140 L210,150 L190,150 Z"/>
+            <path
+                android:fillColor="#8B4513"
+                android:pathData="M195,130 L205,130 L205,140 L195,140 Z"/>
+            
+            <!-- เมฆเคลื่อนไหวเร็ว -->
+            <path
+                android:name="cloud1"
+                android:fillColor="#FFFFFF"
+                android:pathData="M50,30 A8,8 0 1,1 66,30 A8,8 0 1,1 50,30 M58,25 A6,6 0 1,1 70,25 A6,6 0 1,1 58,25"/>
+            
+            <path
+                android:name="cloud2"
+                android:fillColor="#FFFFFF"
+                android:pathData="M300,20 A10,10 0 1,1 320,20 A10,10 0 1,1 300,20 M310,15 A7,7 0 1,1 324,15 A7,7 0 1,1 310,15"/>
+            
+            <!-- ดวงอาทิตย์เคลื่อนไหวเร็ว -->
+            <path
+                android:name="sun"
+                android:fillColor="#FFD700"
+                android:pathData="M350,40 A12,12 0 1,1 374,40 A12,12 0 1,1 350,40"/>
+            
+            <!-- หัวใจเคลื่อนไหว -->
+            <path
+                android:name="heart1"
+                android:fillColor="#FF69B4"
+                android:pathData="M100,80 L110,70 L120,80 L110,90 Z"/>
+            
+            <path
+                android:name="heart2"
+                android:fillColor="#FF1493"
+                android:pathData="M250,60 L260,50 L270,60 L260,70 Z"/>
+            
+        </vector>
+    </aapt:attr>
+    
+    <!-- Animation เมฆที่ 1 - เคลื่อนไหวซ้ายขวาเร็ว -->
+    <target android:name="cloud1">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateX"
+                    android:duration="400"
+                    android:valueFrom="0"
+                    android:valueTo="60"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation เมฆที่ 2 - เคลื่อนไหวขึ้นลงเร็ว -->
+    <target android:name="cloud2">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateY"
+                    android:duration="500"
+                    android:valueFrom="0"
+                    android:valueTo="-15"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation ดวงอาทิตย์ - หมุนเร็ว -->
+    <target android:name="sun">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="rotation"
+                    android:duration="300"
+                    android:valueFrom="0"
+                    android:valueTo="360"
+                    android:repeatCount="infinite"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation หัวใจที่ 1 - เคลื่อนไหวขึ้นลงเร็ว -->
+    <target android:name="heart1">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateY"
+                    android:duration="600"
+                    android:valueFrom="0"
+                    android:valueTo="-20"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation หัวใจที่ 2 - เคลื่อนไหวซ้ายขวาเร็ว -->
+    <target android:name="heart2">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateX"
+                    android:duration="450"
+                    android:valueFrom="0"
+                    android:valueTo="30"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+</animated-vector> 

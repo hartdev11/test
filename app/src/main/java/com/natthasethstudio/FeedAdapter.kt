@@ -26,6 +26,8 @@ import android.os.Handler
 import android.os.Looper
 import androidx.core.view.isVisible
 import com.google.firebase.firestore.SetOptions
+import com.natthasethstudio.sethpos.StoreProfileActivity
+import com.google.android.material.chip.Chip
 
 // Data class to hold cached user info
 data class UserCacheEntry(
@@ -40,12 +42,15 @@ data class UserCacheEntry(
 
 class FeedAdapter(
     private var currentUserId: String?,
-    private val processingLikePostIds: Set<String>,
+    private val processingLikePostIds: MutableSet<String>,
     private val onLikeClickListener: (Post, Int) -> Unit,
-    private val onCommentClickListener: (Post, Int) -> Unit
+    private val onCommentClickListener: (Post, Int) -> Unit,
+    private val onAnimalInteraction: ((String) -> Unit)? = null,
+    private val onHeaderEvent: ((HeaderEvent) -> Unit)? = null
 ) : ListAdapter<Post, RecyclerView.ViewHolder>(DiffCallback()) {
 
     companion object {
+        private const val VIEW_TYPE_HEADER = 100
         private const val VIEW_TYPE_POST = 0
         private const val VIEW_TYPE_LOADING = 1
     }
@@ -62,10 +67,23 @@ class FeedAdapter(
     private val boostDebounceTime = 500L // 500ms debounce time
     private val boostDebounceMap = mutableMapOf<String, Long>()
     private var isLoading = false
+    var currentFilterState = true // true = all, false = nearMe - make it public
+
+    sealed class HeaderEvent {
+        object HomeClick : HeaderEvent()
+        object CheckinClick : HeaderEvent()
+        object ProfileClick : HeaderEvent()
+        object CreatePostClick : HeaderEvent()
+        object AddPhotoClick : HeaderEvent()
+        object ChipAllClick : HeaderEvent()
+        object ChipNearMeClick : HeaderEvent()
+        object NotificationClick : HeaderEvent()
+    }
 
     // Function to get item at position
     override fun getItem(position: Int): Post {
-        return currentList[position]
+        // Adjust position for header (position 0 is header, so subtract 1 for posts)
+        return currentList[position - 1]
     }
 
     // Function to update current user ID
@@ -81,6 +99,14 @@ class FeedAdapter(
         boostProcessingMap.clear()
     }
 
+    // Function to update like button state for a specific post
+    fun updateLikeButtonStateForPost(postId: String) {
+        val position = currentList.indexOfFirst { it.postId == postId }
+        if (position != -1) {
+            notifyItemChanged(position + 1) // +1 because of header
+        }
+    }
+
     fun setLoading(loading: Boolean) {
         val oldLoading = isLoading
         isLoading = loading
@@ -93,12 +119,25 @@ class FeedAdapter(
         }
     }
 
+    override fun getItemCount(): Int {
+        // +1 for header
+        return super.getItemCount() + 1 + if (isLoading) 1 else 0
+    }
+
     override fun getItemViewType(position: Int): Int {
-        return if (position == itemCount - 1 && isLoading) VIEW_TYPE_LOADING else VIEW_TYPE_POST
+        return when {
+            position == 0 -> VIEW_TYPE_HEADER
+            isLoading && position == itemCount - 1 -> VIEW_TYPE_LOADING
+            else -> VIEW_TYPE_POST
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
+            VIEW_TYPE_HEADER -> {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.layout_feed_header, parent, false)
+                HeaderViewHolder(view)
+            }
             VIEW_TYPE_LOADING -> {
                 val view = LayoutInflater.from(parent.context).inflate(R.layout.loading_state, parent, false)
                 LoadingViewHolder(view)
@@ -112,6 +151,9 @@ class FeedAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
+            is HeaderViewHolder -> {
+                bindHeaderViewHolder(holder)
+            }
             is PostViewHolder -> {
                 val post = getItem(position)
                 bindPostViewHolder(holder, post, position)
@@ -123,6 +165,8 @@ class FeedAdapter(
     }
 
     private fun bindPostViewHolder(holder: PostViewHolder, post: Post, position: Int) {
+        Log.d("FeedAdapter", "Binding post at position $position, userId: ${post.userId}")
+        
         // Display nickname if available from post object, otherwise display full name
         if (!post.nickname.isNullOrEmpty()) {
             holder.userName.text = post.nickname
@@ -132,9 +176,10 @@ class FeedAdapter(
         holder.postTime.text = post.postTime
 
         // Enhanced post content display
-        if (!post.postText.isNullOrEmpty()) {
+        val postText = post.postText
+        if (!postText.isNullOrEmpty()) {
             holder.postContent.isVisible = true
-            holder.postContent.text = post.postText
+            holder.postContent.text = postText
         } else {
             holder.postContent.isVisible = false
         }
@@ -156,9 +201,10 @@ class FeedAdapter(
         }
 
         // Enhanced image loading with placeholder and transition
-        if (!post.postImageUrl.isNullOrEmpty()) {
+        val imageUrl = post.postImageUrl
+        if (!imageUrl.isNullOrEmpty()) {
             holder.postImage.isVisible = true
-            loadPostImage(holder.postImage, post.postImageUrl)
+            loadPostImage(holder.postImage, imageUrl)
         } else {
             holder.postImage.isVisible = false
         }
@@ -167,6 +213,7 @@ class FeedAdapter(
         fetchBoostData(post, holder)
 
         // Set up click listeners with ripple effects
+        Log.d("FeedAdapter", "Setting up click listeners for post at position $position")
         setupClickListeners(holder, post, position)
     }
 
@@ -204,7 +251,11 @@ class FeedAdapter(
     }
 
     private fun updateLikeButtonState(holder: PostViewHolder, post: Post) {
+        Log.d("FeedAdapter", "Updating like button state for post: ${post.postId}, isLiked: ${post.isLiked}, likeCount: ${post.likeCount}")
+        
         holder.btnLike.isEnabled = !processingLikePostIds.contains(post.postId)
+        
+        // อัพเดทไอคอนและสีของปุ่มไลค์
         if (post.isLiked) {
             holder.btnLike.setIconResource(R.drawable.ic_heart_filled)
             holder.btnLike.iconTint = ContextCompat.getColorStateList(holder.itemView.context, R.color.like_red)
@@ -215,16 +266,14 @@ class FeedAdapter(
             holder.btnLike.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.text_primary))
         }
         
-        // Update like count with animation
-        val likeCountText = holder.itemView.context.getString(R.string.post_like_count, post.likeCount)
-        if (holder.likeCount.text != likeCountText) {
-            holder.likeCount.alpha = 0f
-            holder.likeCount.text = likeCountText
-            holder.likeCount.animate()
-                .alpha(1f)
-                .setDuration(200)
-                .start()
-        }
+        // อัพเดทจำนวนไลค์
+        val likeCountText = if (post.likeCount > 0) "${post.likeCount}" else ""
+        holder.likeCount.text = likeCountText
+        
+        // แสดงหรือซ่อนจำนวนไลค์
+        holder.likeCount.visibility = if (post.likeCount > 0) View.VISIBLE else View.GONE
+        
+        Log.d("FeedAdapter", "Like button updated - enabled: ${holder.btnLike.isEnabled}, count: $likeCountText")
     }
 
     private fun updateCommentCount(holder: PostViewHolder, post: Post) {
@@ -267,9 +316,7 @@ class FeedAdapter(
         val currentUserId = currentUserId ?: return
 
         // ตรวจสอบว่ากำลังบูสต์อยู่หรือไม่
-        if (boostProcessingMap[postId] == true) {
-            return
-        }
+        if (boostProcessingMap[postId] ?: false) return
 
         // ตั้งค่าสถานะการบูสต์
         boostProcessingMap[postId] = true
@@ -335,12 +382,49 @@ class FeedAdapter(
     }
 
     private fun setupClickListeners(holder: PostViewHolder, post: Post, position: Int) {
+        Log.d("FeedAdapter", "Setting up click listeners for userId: ${post.userId}")
+        
         // User image click listener
         holder.userImage.setOnClickListener {
+            Log.d("FeedAdapter", "User image clicked! userId: ${post.userId}")
             post.userId?.let { userId ->
-                val intent = Intent(holder.itemView.context, ProfileActivity::class.java)
-                intent.putExtra("userId", userId)
-                holder.itemView.context.startActivity(intent)
+                Log.d("FeedAdapter", "User image clicked for userId: $userId")
+                // ตรวจสอบ role ของ user ก่อน
+                firestore.collection("users").document(userId)
+                    .get()
+                    .addOnSuccessListener { userDoc ->
+                        if (userDoc.exists()) {
+                            val isStore = userDoc.getBoolean("isStore") ?: false
+                            Log.d("FeedAdapter", "User data found - isStore: $isStore, userId: $userId")
+                            
+                            if (isStore) {
+                                // ร้านค้า -> StoreProfileActivity
+                                Log.d("FeedAdapter", "Navigating to StoreProfileActivity for store: $userId")
+                                val intent = Intent(holder.itemView.context, StoreProfileActivity::class.java)
+                                intent.putExtra("storeId", userId)
+                                holder.itemView.context.startActivity(intent)
+                            } else {
+                                // ลูกค้า -> ProfileActivity
+                                Log.d("FeedAdapter", "Navigating to ProfileActivity for customer: $userId")
+                                val intent = Intent(holder.itemView.context, ProfileActivity::class.java)
+                                intent.putExtra("userId", userId)
+                                holder.itemView.context.startActivity(intent)
+                            }
+                        } else {
+                            // ถ้าไม่พบข้อมูล user ให้เด้งไป ProfileActivity เป็นค่าเริ่มต้น
+                            Log.d("FeedAdapter", "User document not found, navigating to ProfileActivity: $userId")
+                            val intent = Intent(holder.itemView.context, ProfileActivity::class.java)
+                            intent.putExtra("userId", userId)
+                            holder.itemView.context.startActivity(intent)
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        // ถ้าเกิด error ให้เด้งไป ProfileActivity เป็นค่าเริ่มต้น
+                        Log.e("FeedAdapter", "Error checking user role: ${e.message}")
+                        val intent = Intent(holder.itemView.context, ProfileActivity::class.java)
+                        intent.putExtra("userId", userId)
+                        holder.itemView.context.startActivity(intent)
+                    }
             }
         }
 
@@ -373,7 +457,18 @@ class FeedAdapter(
                     }
                     .start()
                 
+                // เก็บสถานะปัจจุบันก่อนที่จะส่งไปยัง onLikeClickListener
+                val currentLikeState = post.isLiked
+                val willBeLiked = !currentLikeState
+                
+                Log.d("FeedAdapter", "Like button clicked - current state: $currentLikeState, will be: $willBeLiked")
+                
                 onLikeClickListener.invoke(post, position)
+                
+                // ส่ง interaction type ที่ถูกต้อง
+                val interactionType = if (willBeLiked) "like" else "unlike"
+                Log.d("FeedAdapter", "Sending animal interaction: $interactionType")
+                onAnimalInteraction?.invoke(interactionType)
             }
         }
 
@@ -381,6 +476,7 @@ class FeedAdapter(
             // Add haptic feedback
             holder.btnComment.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
             onCommentClickListener.invoke(post, position)
+            onAnimalInteraction?.invoke("comment")
         }
 
         holder.viewAllComments.setOnClickListener {
@@ -389,7 +485,15 @@ class FeedAdapter(
 
         holder.btnBoost.setOnClickListener {
             if (!isBoostProcessing) {
+                // Get the current state BEFORE updating
+                val wasBoosted = post.isBoosted
+                val willBeBoosted = !wasBoosted
+                val interactionType = if (willBeBoosted) "boost" else "unboost"
+                android.util.Log.d("FeedAdapter", "Post ${post.postId}: wasBoosted=$wasBoosted, willBeBoosted=$willBeBoosted, sending interaction: $interactionType")
+                android.util.Log.d("FeedAdapter", "DEBUG: About to call handleBoostAction and send $interactionType")
+                
                 handleBoostAction(post, holder)
+                onAnimalInteraction?.invoke(interactionType)
             }
         }
 
@@ -689,15 +793,15 @@ class FeedAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean {
+            // เปรียบเทียบเฉพาะข้อมูลที่สำคัญ ไม่รวมข้อมูลที่เปลี่ยนแปลงบ่อย
             return oldItem.postId == newItem.postId &&
-                   oldItem.likeCount == newItem.likeCount &&
-                   oldItem.isLiked == newItem.isLiked &&
-                   oldItem.commentCount == newItem.commentCount &&
                    oldItem.postText == newItem.postText &&
                    oldItem.postImageUrl == newItem.postImageUrl &&
                    oldItem.nickname == newItem.nickname &&
                    oldItem.displayName == newItem.displayName &&
                    oldItem.postTime == newItem.postTime
+                   // ไม่รวม likeCount, isLiked, commentCount, boostCount, isBoosted 
+                   // เพื่อป้องกันการเด้งไปด้านบนเมื่อมีการเปลี่ยนแปลงข้อมูลเหล่านี้
         }
     }
 
@@ -717,7 +821,105 @@ class FeedAdapter(
         val verifiedBadge: ImageView = itemView.findViewById(R.id.verifiedBadge)
         val boostCount: TextView = itemView.findViewById(R.id.boostCount)
         val boostLabel: TextView? = itemView.findViewById(R.id.boostLabel)
+        
+        init {
+            Log.d("FeedAdapter", "PostViewHolder created, userImage: $userImage")
+            Log.d("FeedAdapter", "userImage is clickable: ${userImage.isClickable}")
+            Log.d("FeedAdapter", "userImage is focusable: ${userImage.isFocusable}")
+        }
     }
 
     class LoadingViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+
+    class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val profileImage: ShapeableImageView = itemView.findViewById(R.id.profileImageMain)
+        val profileImageCreatePost: ShapeableImageView = itemView.findViewById(R.id.profileImageCreatePost)
+        val userName: TextView = itemView.findViewById(R.id.userName)
+        val userStatus: TextView = itemView.findViewById(R.id.userStatus)
+        val tvStoreName: TextView = itemView.findViewById(R.id.tvStoreName)
+        val btnNotifications: ImageButton = itemView.findViewById(R.id.btnNotifications)
+        val chipAll: Chip = itemView.findViewById(R.id.chipAll)
+        val chipNearMe: Chip = itemView.findViewById(R.id.chipNearMe)
+        val btnCreatePost: View = itemView.findViewById(R.id.createPostBar)
+        val btnAddPhoto: ImageButton = itemView.findViewById(R.id.addPhotoButton)
+        val btnHome: View = itemView.findViewById(R.id.topNavHome)
+        val btnCheckin: View = itemView.findViewById(R.id.topNavCheckin)
+        val btnProfile: View = itemView.findViewById(R.id.topNavProfile)
+        
+        fun bind(currentUserId: String?, onHeaderEvent: ((HeaderEvent) -> Unit)?, isAllFilter: Boolean = true) {
+            // Set chip states
+            chipAll.isChecked = isAllFilter
+            chipNearMe.isChecked = !isAllFilter
+            
+            // Load user profile data
+            currentUserId?.let { userId ->
+                FirebaseFirestore.getInstance().collection("users").document(userId)
+                    .get()
+                    .addOnSuccessListener { document ->
+                        if (document.exists()) {
+                            val displayName = document.getString("displayName") ?: "ผู้ใช้"
+                            val status = document.getString("status") ?: ""
+                            val storeName = document.getString("storeName") ?: ""
+                            val avatarId = document.getLong("avatarId")?.toInt() ?: -1
+                            
+                            userName.text = displayName
+                            userStatus.text = status
+                            tvStoreName.text = storeName
+
+                            // Load profile image
+                            val profileImageUrl = document.getString("profileImageUrl")
+                            if (!profileImageUrl.isNullOrEmpty()) {
+                                Glide.with(itemView.context)
+                                    .load(profileImageUrl)
+                                    .error(R.drawable.ic_profile)
+                                    .into(profileImage)
+                                Glide.with(itemView.context)
+                                    .load(profileImageUrl)
+                                    .error(R.drawable.ic_profile)
+                                    .into(profileImageCreatePost)
+                            } else if (avatarId != -1 && avatarId < AvatarResources.avatarList.size) {
+                                profileImage.setImageResource(AvatarResources.avatarList[avatarId])
+                                profileImageCreatePost.setImageResource(AvatarResources.avatarList[avatarId])
+                            } else {
+                                profileImage.setImageResource(R.drawable.ic_profile)
+                                profileImageCreatePost.setImageResource(R.drawable.ic_profile)
+                            }
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("HeaderViewHolder", "Error loading user profile: ${e.message}")
+                        profileImage.setImageResource(R.drawable.ic_profile)
+                        profileImageCreatePost.setImageResource(R.drawable.ic_profile)
+                        userName.text = "ผู้ใช้"
+                        userStatus.text = ""
+                        tvStoreName.text = ""
+                    }
+            }
+            
+            // Set up click listeners
+            btnHome.setOnClickListener { onHeaderEvent?.invoke(HeaderEvent.HomeClick) }
+            btnCheckin.setOnClickListener { onHeaderEvent?.invoke(HeaderEvent.CheckinClick) }
+            btnProfile.setOnClickListener { onHeaderEvent?.invoke(HeaderEvent.ProfileClick) }
+            btnCreatePost.setOnClickListener { onHeaderEvent?.invoke(HeaderEvent.CreatePostClick) }
+            btnAddPhoto.setOnClickListener { onHeaderEvent?.invoke(HeaderEvent.AddPhotoClick) }
+            btnNotifications.setOnClickListener { onHeaderEvent?.invoke(HeaderEvent.NotificationClick) }
+            chipAll.setOnClickListener { onHeaderEvent?.invoke(HeaderEvent.ChipAllClick) }
+            chipNearMe.setOnClickListener { onHeaderEvent?.invoke(HeaderEvent.ChipNearMeClick) }
+        }
+    }
+
+    private fun bindHeaderViewHolder(holder: HeaderViewHolder) {
+        holder.bind(currentUserId, onHeaderEvent, currentFilterState)
+    }
+
+    fun setFilterState(isAllFilter: Boolean) {
+        currentFilterState = isAllFilter
+        // Update chip states in header
+        notifyItemChanged(0) // Notify header to update
+    }
+
+    fun updateHeaderProfile() {
+        // Update header profile when user data changes
+        notifyItemChanged(0) // Notify header to update
+    }
 }

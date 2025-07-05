@@ -9,12 +9,12 @@ plugins {
 
 android {
     namespace = "com.example.com.natthasethstudio.sethpos"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.com.natthasethstudio.sethpos"
         minSdk = 23
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -77,8 +77,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-tasks:18.0.2")
 
     // Google Play Billing Library
-    implementation("com.android.billingclient:billing-ktx:6.1.0")
-    implementation("com.android.billingclient:billing:6.1.0")
+    implementation("com.android.billingclient:billing:8.0.0")
 
     // ZXing for QR code generation
     implementation("com.google.zxing:core:3.5.2")

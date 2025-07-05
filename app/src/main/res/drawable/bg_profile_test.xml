@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="400dp"
+            android:height="200dp"
+            android:viewportWidth="400"
+            android:viewportHeight="200">
+            
+            <!-- พื้นหลังหลัก -->
+            <path
+                android:fillColor="#87CEEB"
+                android:pathData="M0,0 L400,0 L400,200 L0,200 Z"/>
+            
+            <!-- ท้องฟ้า gradient -->
+            <path
+                android:fillColor="#FFB6C1"
+                android:pathData="M0,0 L400,0 L400,80 L0,80 Z"/>
+            
+            <!-- พระอาทิตย์ -->
+            <path
+                android:name="sun"
+                android:fillColor="#FFD700"
+                android:pathData="M320,30 Q330,20 340,30 Q350,40 340,50 Q330,60 320,50 Q310,40 320,30"/>
+            
+            <!-- เมฆเคลื่อนไหว -->
+            <path
+                android:name="cloud1"
+                android:fillColor="#FFFFFF"
+                android:pathData="M20,40 Q30,30 40,40 Q50,50 40,60 Q30,70 20,60 Q10,50 20,40"/>
+            
+            <!-- อาคาร -->
+            <path
+                android:fillColor="#8B4513"
+                android:pathData="M50,200 L50,120 L80,120 L80,200 Z"/>
+            <path
+                android:fillColor="#8B4513"
+                android:pathData="M320,200 L320,140 L350,140 L350,200 Z"/>
+            
+            <!-- หน้าต่าง -->
+            <path
+                android:fillColor="#FFD700"
+                android:pathData="M55,130 L65,130 L65,140 L55,140 Z"/>
+            <path
+                android:fillColor="#FFD700"
+                android:pathData="M325,150 L335,150 L335,160 L325,160 Z"/>
+            
+        </vector>
+    </aapt:attr>
+    
+    <!-- Animation สำหรับพระอาทิตย์ - เคลื่อนที่ขึ้นลง -->
+    <target android:name="sun">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateY"
+                    android:duration="2000"
+                    android:valueFrom="0"
+                    android:valueTo="-20"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation สำหรับเมฆ - เคลื่อนที่ซ้ายขวา -->
+    <target android:name="cloud1">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateX"
+                    android:duration="4000"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+</animated-vector> 

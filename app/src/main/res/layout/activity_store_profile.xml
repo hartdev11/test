@@ -1,79 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:orientation="vertical"
+    android:background="#F5F7FA"
+    android:clipChildren="false">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <!-- Header with animated wave background -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary">
+        android:layout_height="180dp">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+        <ImageView
+            android:id="@+id/animatedWaveBackground"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:title="โปรไฟล์ร้านค้า"
-            app:titleTextColor="@android:color/white"/>
+            android:layout_height="match_parent"
+            android:src="@drawable/animated_wave_bg"
+            android:scaleType="centerCrop" />
+    </FrameLayout>
 
-    </com.google.android.material.appbar.AppBarLayout>
+    <!-- Store Image overlap -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="-60dp"
+        app:cardCornerRadius="60dp"
+        app:cardElevation="6dp"
+        app:strokeWidth="2dp"
+        app:strokeColor="#FFFFFF">
 
-    <androidx.core.widget.NestedScrollView
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/storeImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/store_placeholder"
+            app:civ_border_width="0dp" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Change Image Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/changeImageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="-30dp"
+        android:layout_marginStart="60dp"
+        android:src="@drawable/ic_camera"
+        app:fabSize="mini"
+        app:tint="@android:color/white"
+        app:backgroundTint="@color/colorPrimary" />
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:fillViewport="true"
+        android:clipToPadding="false">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingTop="40dp"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp">
 
-            <!-- Profile Image Section -->
-            <androidx.cardview.widget.CardView
+            <!-- Store Name -->
+            <TextView
+                android:id="@+id/storeNameText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textColor="#222222"
+                android:layout_marginBottom="4dp"
+                android:text="ชื่อร้านค้า" />
 
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="16dp">
-
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/storeImage"
-                        android:layout_width="180dp"
-                        android:layout_height="180dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/store_placeholder"
-                        app:civ_border_width="4dp"
-                        app:civ_border_color="#FFFFFF"
-                        android:contentDescription="รูปโปรไฟล์ร้านค้า"/>
-
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/changeImageButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="bottom|end"
-                        android:layout_margin="-4dp"
-                        android:src="@android:drawable/ic_menu_camera"
-                        app:fabSize="mini"/>
-
-                </FrameLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Account Information Section -->
-            <androidx.cardview.widget.CardView
+            <!-- Store Email -->
+            <TextView
+                android:id="@+id/storeEmailText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:textColor="#666666"
+                android:layout_marginBottom="32dp"
+                android:text="อีเมลร้านค้า" />
+
+            <!-- Account Information Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
+                app:cardElevation="2dp"
+                android:layout_marginBottom="24dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -87,46 +109,45 @@
                         android:text="ข้อมูลบัญชี"
                         android:textSize="18sp"
                         android:textStyle="bold"
-                        android:layout_marginBottom="16dp"/>
+                        android:textColor="#222222"
+                        android:layout_marginBottom="16dp" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense" >
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/emailInput"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="อีเมล"
-                            android:inputType="textEmailAddress"/>
-
+                            android:inputType="textEmailAddress" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense" >
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/passwordInput"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="รหัสผ่าน"
-                            android:inputType="textPassword"/>
-
+                            android:inputType="textPassword" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
 
-            <!-- Navigation Buttons Section -->
-            <androidx.cardview.widget.CardView
+            <!-- Navigation Menu Card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
+                app:cardElevation="2dp"
+                android:layout_marginBottom="24dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -140,36 +161,109 @@
                         android:text="เมนูนำทาง"
                         android:textSize="18sp"
                         android:textStyle="bold"
-                        android:layout_marginBottom="16dp"/>
+                        android:textColor="#222222"
+                        android:layout_marginBottom="16dp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/postsButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="โพสต์"
+                        android:text="สร้างโพสต์"
                         android:layout_marginBottom="8dp"
-                        style="@style/Widget.MaterialComponents.Button.TextButton" 
-                        app:icon="@android:drawable/ic_menu_edit"/>
+                        app:icon="@drawable/ic_create_post"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:cornerRadius="24dp"
+                        android:gravity="center"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/dashboardButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="แดชบอร์ด"
-                        style="@style/Widget.MaterialComponents.Button.TextButton" 
-                        app:icon="@android:drawable/ic_menu_compass"/>
+                        android:layout_marginBottom="8dp"
+                        app:icon="@drawable/ic_home"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:cornerRadius="24dp"
+                        android:gravity="center"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/feedButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="ฟีด"
-                        android:layout_marginTop="8dp"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        app:icon="@android:drawable/ic_menu_view"/>
-
+                        android:text="ดูฟีด"
+                        app:icon="@drawable/ic_feed"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:cornerRadius="24dp"
+                        android:gravity="center"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- การตั้งค่า -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="การตั้งค่า"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#222222"
+                        android:layout_marginBottom="16dp"/>
+
+                    <!-- การตั้งค่า Animation -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/animated_cat"
+                            android:layout_marginEnd="12dp"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="แสดงสัตว์น่ารักในหน้า feed"
+                            android:textSize="16sp"/>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchAnimatedAnimals"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="สัตว์น่ารักจะปรากฏในหน้า feed เพื่อเพิ่มความสนุก"
+                        android:textSize="12sp"
+                        android:textColor="#666666"
+                        android:layout_marginStart="36dp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Save Changes Button -->
             <com.google.android.material.button.MaterialButton
@@ -177,11 +271,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="บันทึกการเปลี่ยนแปลง"
-                android:layout_marginTop="8dp"
-                android:padding="16dp"
-                app:cornerRadius="16dp"/>
-
+                android:layout_marginBottom="24dp"
+                app:icon="@drawable/ic_check"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:cornerRadius="24dp" />
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout> 
+    </ScrollView>
+</LinearLayout> 

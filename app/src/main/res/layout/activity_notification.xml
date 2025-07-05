@@ -37,7 +37,7 @@
                     android:src="@drawable/ic_check_all"
                     android:contentDescription="ทำเครื่องหมายว่าอ่านแล้วทั้งหมด"
                     android:padding="12dp"
-                    android:tint="@android:color/white" />
+                    app:tint="@android:color/white" />
 
                 <ImageButton
                     android:id="@+id/btnClearAll"
@@ -47,7 +47,7 @@
                     android:src="@drawable/ic_delete"
                     android:contentDescription="ลบการแจ้งเตือนทั้งหมด"
                     android:padding="12dp"
-                    android:tint="@android:color/white" />
+                    app:tint="@android:color/white" />
             </LinearLayout>
 
             <TextView

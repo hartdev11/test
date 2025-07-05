@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="32dp"
+            android:height="24dp"
+            android:viewportWidth="32"
+            android:viewportHeight="24">
+            
+            <!-- Rabbit body -->
+            <path
+                android:name="rabbitBody"
+                android:fillColor="#FFFFFF"
+                android:pathData="M10,16 L22,16 L22,20 L10,20 Z" />
+            
+            <!-- Rabbit head -->
+            <path
+                android:name="rabbitHead"
+                android:fillColor="#FFFFFF"
+                android:pathData="M8,12 L18,12 L18,16 L8,16 Z" />
+            
+            <!-- Rabbit ears -->
+            <path
+                android:name="rabbitEars"
+                android:fillColor="#FFFFFF"
+                android:pathData="M10,8 L12,6 L14,8 L12,10 Z M16,8 L18,6 L20,8 L18,10 Z" />
+            
+            <!-- Rabbit tail -->
+            <path
+                android:name="rabbitTail"
+                android:fillColor="#FFFFFF"
+                android:pathData="M22,18 L26,16 L26,20 L22,18 Z" />
+            
+            <!-- Rabbit eyes -->
+            <path
+                android:name="rabbitEyes"
+                android:fillColor="#000000"
+                android:pathData="M10,13 L11,13 L11,14 L10,14 Z M16,13 L17,13 L17,14 L16,14 Z" />
+            
+            <!-- Rabbit nose -->
+            <path
+                android:name="rabbitNose"
+                android:fillColor="#FFB3BA"
+                android:pathData="M13,14 L14,14 L14,15 L13,15 Z" />
+            
+            <!-- Rabbit whiskers -->
+            <path
+                android:name="rabbitWhiskers"
+                android:fillColor="#000000"
+                android:pathData="M8,14 L6,13 L8,13 Z M8,15 L6,15 L8,15 Z" />
+        </vector>
+    </aapt:attr>
+    
+    <!-- Rabbit jumping animation -->
+    <target android:name="rabbitBody">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="600"
+                    android:propertyName="pathData"
+                    android:valueFrom="M10,16 L22,16 L22,20 L10,20 Z"
+                    android:valueTo="M10,12 L22,12 L22,16 L10,16 Z"
+                    android:valueType="pathType"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse" />
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Rabbit head movement -->
+    <target android:name="rabbitHead">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="600"
+                    android:propertyName="pathData"
+                    android:valueFrom="M8,12 L18,12 L18,16 L8,16 Z"
+                    android:valueTo="M8,8 L18,8 L18,12 L8,12 Z"
+                    android:valueType="pathType"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse" />
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Rabbit ears movement -->
+    <target android:name="rabbitEars">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="400"
+                    android:propertyName="pathData"
+                    android:valueFrom="M10,8 L12,6 L14,8 L12,10 Z M16,8 L18,6 L20,8 L18,10 Z"
+                    android:valueTo="M10,6 L12,4 L14,6 L12,8 Z M16,6 L18,4 L20,6 L18,8 Z"
+                    android:valueType="pathType"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse" />
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Rabbit tail movement -->
+    <target android:name="rabbitTail">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="300"
+                    android:propertyName="pathData"
+                    android:valueFrom="M22,18 L26,16 L26,20 L22,18 Z"
+                    android:valueTo="M22,18 L26,14 L26,18 L22,18 Z"
+                    android:valueType="pathType"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector> 

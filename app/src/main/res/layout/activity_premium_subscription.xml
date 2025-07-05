@@ -23,8 +23,7 @@
             <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:src="@drawable/ic_crown"
-                app:tint="@color/white"
+                android:src="@drawable/diamondpremium"
                 android:contentDescription="@string/premium_icon" />
 
             <TextView

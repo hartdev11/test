@@ -72,6 +72,7 @@
     <!-- Like color -->
     <color name="like_red">#FF4081</color>
     <color name="boost_color">#FF9800</color>
+    <color name="red">#F44336</color>
 
     <!-- Bottom Navigation -->
     <color name="bottom_nav_item_color">#212121</color>

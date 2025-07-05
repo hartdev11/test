@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="400dp"
+            android:height="200dp"
+            android:viewportWidth="400"
+            android:viewportHeight="200">
+            
+            <!-- พื้นหลังหลัก - สีม่วงอ่อน -->
+            <path
+                android:fillColor="#F0E6FF"
+                android:pathData="M0,0 L400,0 L400,200 L0,200 Z"/>
+            
+            <!-- ท้องฟ้า gradient -->
+            <path
+                android:fillColor="#FFE6F0"
+                android:pathData="M0,0 L400,0 L400,80 L0,80 Z"/>
+            
+            <!-- ภูเขาฟูจิ -->
+            <path
+                android:fillColor="#FFFFFF"
+                android:pathData="M150,200 L150,80 L200,60 L250,80 L250,200 Z"/>
+            
+            <!-- ดวงจันทร์เคลื่อนไหวเร็ว -->
+            <path
+                android:name="moon"
+                android:fillColor="#F0F0F0"
+                android:pathData="M320,30 A10,10 0 1,1 340,30 A10,10 0 1,1 320,30"/>
+            
+            <!-- ดาวเคลื่อนไหว -->
+            <path
+                android:name="star1"
+                android:fillColor="#FFFF00"
+                android:pathData="M50,20 L52,25 L57,25 L53,28 L55,33 L50,30 L45,33 L47,28 L43,25 L48,25 Z"/>
+            
+            <path
+                android:name="star2"
+                android:fillColor="#FFFF00"
+                android:pathData="M280,15 L282,20 L287,20 L283,23 L285,28 L280,25 L275,28 L277,23 L273,20 L278,20 Z"/>
+            
+            <!-- ซากุระเคลื่อนไหว -->
+            <path
+                android:name="cherry1"
+                android:fillColor="#FFB6C1"
+                android:pathData="M80,100 A5,5 0 1,1 90,100 A5,5 0 1,1 80,100"/>
+            
+            <path
+                android:name="cherry2"
+                android:fillColor="#FF69B4"
+                android:pathData="M200,90 A6,6 0 1,1 212,90 A6,6 0 1,1 200,90"/>
+            
+            <path
+                android:name="cherry3"
+                android:fillColor="#FF1493"
+                android:pathData="M350,110 A4,4 0 1,1 358,110 A4,4 0 1,1 350,110"/>
+            
+        </vector>
+    </aapt:attr>
+    
+    <!-- Animation ดวงจันทร์ - เคลื่อนไหวขึ้นลงเร็ว -->
+    <target android:name="moon">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateY"
+                    android:duration="350"
+                    android:valueFrom="0"
+                    android:valueTo="-25"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation ดาวที่ 1 - กระพริบเร็ว -->
+    <target android:name="star1">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="alpha"
+                    android:duration="200"
+                    android:valueFrom="1.0"
+                    android:valueTo="0.3"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation ดาวที่ 2 - หมุนเร็ว -->
+    <target android:name="star2">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="rotation"
+                    android:duration="250"
+                    android:valueFrom="0"
+                    android:valueTo="360"
+                    android:repeatCount="infinite"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation ซากุระที่ 1 - เคลื่อนไหวซ้ายขวาเร็ว -->
+    <target android:name="cherry1">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateX"
+                    android:duration="400"
+                    android:valueFrom="0"
+                    android:valueTo="40"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation ซากุระที่ 2 - เคลื่อนไหวขึ้นลงเร็ว -->
+    <target android:name="cherry2">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateY"
+                    android:duration="500"
+                    android:valueFrom="0"
+                    android:valueTo="-30"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation ซากุระที่ 3 - หมุนและเคลื่อนไหว -->
+    <target android:name="cherry3">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="rotation"
+                    android:duration="300"
+                    android:valueFrom="0"
+                    android:valueTo="360"
+                    android:repeatCount="infinite"/>
+                <objectAnimator
+                    android:propertyName="translateX"
+                    android:duration="600"
+                    android:valueFrom="0"
+                    android:valueTo="50"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+</animated-vector> 

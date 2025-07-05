@@ -105,6 +105,10 @@ class RoleSelectionActivity : AppCompatActivity() {
         
         val user = auth.currentUser
         if (user != null) {
+            // ตรวจสอบว่าเป็น Google user หรือไม่ (มี photoUrl และ provider เป็น Google)
+            val isGoogleUser = user.photoUrl != null && 
+                              user.providerData.any { it.providerId == "google.com" }
+            
             val userData = mapOf(
                 "email" to (user.email ?: ""),
                 "username" to (user.displayName ?: ""),
@@ -112,6 +116,7 @@ class RoleSelectionActivity : AppCompatActivity() {
                 "avatarId" to 0,
                 "displayName" to displayName,
                 "profileImageUrl" to (user.photoUrl?.toString() ?: ""),
+                "isGoogleUser" to isGoogleUser,
                 "createdAt" to com.google.firebase.Timestamp.now(),
                 "isStore" to (role == "merchant")
             )

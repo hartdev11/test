@@ -69,16 +69,6 @@ class CustomerMainActivity : AppCompatActivity() {
     private val processingLikePostIds = mutableSetOf<String>()
 
     // UI elements
-    private lateinit var chipAll: Chip
-    private lateinit var chipNearMe: Chip
-    private lateinit var profileImage: ShapeableImageView
-    private lateinit var profileImageCreatePost: ShapeableImageView
-    private lateinit var profileInfoContainer: MaterialCardView
-    private lateinit var userName: TextView
-    private lateinit var userStatus: TextView
-    private lateinit var btnNotifications: ImageButton
-    private lateinit var tvStoreName: TextView
-    private lateinit var topNavigationBar: MaterialCardView
     private lateinit var swipeRefreshLayout: androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     private lateinit var emptyFeedTextView: TextView
     private lateinit var loadingProgressBar: ProgressBar
@@ -96,8 +86,8 @@ class CustomerMainActivity : AppCompatActivity() {
             val user = firebaseAuth.currentUser
             if (user != null) {
                 currentUserId = user.uid
-                loadUserProfile()
                 feedAdapter.setCurrentUserId(user.uid)
+                feedAdapter.updateHeaderProfile()
             } else {
                 startActivity(Intent(this, LoginActivity::class.java))
                 finish()
@@ -116,6 +106,17 @@ class CustomerMainActivity : AppCompatActivity() {
             fetchPostsOptimized(filter = "all", paginate = false)
         }
     }
+    
+    private val commentActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        // When returning from comment activity, check if comment was actually made
+        if (it.resultCode == RESULT_OK) {
+            // User actually commented
+            binding.animatedAnimalsView?.onCommentFinished()
+        } else {
+            // User cancelled without commenting
+            binding.animatedAnimalsView?.onCommentCancelled()
+        }
+    }
 
     private val handler = Handler(Looper.getMainLooper())
     private val listeners = mutableListOf<com.google.firebase.firestore.ListenerRegistration>()
@@ -131,47 +132,37 @@ class CustomerMainActivity : AppCompatActivity() {
         binding = ActivityCustomerMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Reference Views from Layout
+        // Reference Views from Layout (header views are now in RecyclerView header, do not bind here)
         recyclerViewFeed = binding.recyclerViewFeed
-        chipAll = binding.chipAll
-        chipNearMe = binding.chipNearMe
-        profileImage = binding.profileImageMain
-        profileImageCreatePost = binding.profileImageCreatePost
-        profileInfoContainer = binding.profileInfoContainer
-        userName = binding.userName
-        userStatus = binding.userStatus
-        btnNotifications = binding.btnNotifications
-        tvStoreName = binding.tvStoreName
-        topNavigationBar = binding.topNavigationBar
         swipeRefreshLayout = binding.swipeRefreshLayout
-
-        // Initialize views
-        val createPostBar = binding.createPostBar
-        addPhotoButton = binding.addPhotoButton
-
-        // Initialize top navigation views
-        val topNavHome = binding.topNavHome
-        val topNavCheckin = binding.topNavCheckin
-        val topNavProfile = binding.topNavProfile
-
-        // Set up top navigation click listeners
-        topNavHome?.setOnClickListener {
-            recyclerViewFeed.smoothScrollToPosition(0)
-        }
-
-        topNavCheckin?.setOnClickListener {
-            val intent = CheckInActivity.newIntent(this)
-            startActivity(intent)
-        }
-
-        topNavProfile?.setOnClickListener {
-            val intent = ProfileActivity.newIntent(this)
-            intent.putExtra("userId", currentUserId)
-            startActivity(intent)
-        }
+        emptyFeedTextView = findViewById(R.id.emptyFeedTextView)
+        loadingProgressBar = findViewById(R.id.loadingIndicator)
 
         // Set up RecyclerView
-        recyclerViewFeed.layoutManager = LinearLayoutManager(this)
+        val layoutManager = LinearLayoutManager(this)
+        recyclerViewFeed.layoutManager = layoutManager
+        
+        // ป้องกันการ scroll ไปด้านบนเมื่ออัพเดท item
+        recyclerViewFeed.itemAnimator = null
+        
+        // ป้องกันการ scroll ไปด้านบนเมื่อมีการเปลี่ยนแปลงข้อมูล
+        recyclerViewFeed.setHasFixedSize(true)
+        
+        // ป้องกันการ scroll ไปด้านบนเมื่อมีการเปลี่ยนแปลงข้อมูล
+        layoutManager.isItemPrefetchEnabled = false
+        
+        // ป้องกันการ scroll ไปด้านบนเมื่อมีการเปลี่ยนแปลงข้อมูล
+        recyclerViewFeed.isNestedScrollingEnabled = false
+        
+        // ป้องกันการ scroll ไปด้านบนเมื่อมีการเปลี่ยนแปลงข้อมูล
+        recyclerViewFeed.overScrollMode = View.OVER_SCROLL_NEVER
+        
+        // ป้องกันการ scroll ไปด้านบนเมื่อมีการเปลี่ยนแปลงข้อมูล
+        recyclerViewFeed.setItemViewCacheSize(50)
+        
+        // ป้องกันการ scroll ไปด้านบนเมื่อมีการเปลี่ยนแปลงข้อมูล
+        recyclerViewFeed.recycledViewPool.setMaxRecycledViews(0, 20)
+        
         feedAdapter = FeedAdapter(
             currentUserId = currentUserId,
             processingLikePostIds = processingLikePostIds,
@@ -181,7 +172,13 @@ class CustomerMainActivity : AppCompatActivity() {
             onCommentClickListener = { post, position ->
                 val intent = Intent(this, CommentActivity::class.java)
                 intent.putExtra("postId", post.postId)
-                startActivity(intent)
+                commentActivityResultLauncher.launch(intent)
+            },
+            onAnimalInteraction = { interactionType ->
+                handleAnimalInteraction(interactionType)
+            },
+            onHeaderEvent = { event ->
+                handleHeaderEvent(event)
             }
         )
         recyclerViewFeed.adapter = feedAdapter
@@ -189,97 +186,11 @@ class CustomerMainActivity : AppCompatActivity() {
         // Store FeedAdapter instance in Application
         (application as? SethPOSApplication)?.feedAdapter = feedAdapter
 
-        // Set click listeners
+        // Set click listeners for non-header views
         val btnGoToPremium = binding.btnGoToPremium
         btnGoToPremium?.setOnClickListener {
             val intent = Intent(this, PremiumSubscriptionActivity::class.java)
             startActivity(intent)
-        }
-
-        createPostBar?.setOnClickListener {
-            checkPostLimit { canPost ->
-                if (canPost) {
-                    val intent = Intent(this, CreatePostActivity::class.java)
-                    createPostActivityResultLauncher.launch(intent)
-                } else {
-                    val intent = Intent(this, PremiumSubscriptionActivity::class.java)
-                    startActivity(intent)
-                }
-            }
-        }
-
-        addPhotoButton?.setOnClickListener {
-            checkPremiumStatus { isPremium ->
-                if (isPremium) {
-                    val intent = Intent(this, CreatePostActivity::class.java)
-                    createPostActivityResultLauncher.launch(intent)
-                } else {
-                    Toast.makeText(this, "ฟีเจอร์อัปโหลดรูปภาพสำหรับสมาชิกพรีเมียมเท่านั้น", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, PremiumSubscriptionActivity::class.java)
-                    startActivity(intent)
-                }
-            }
-        }
-
-        // Profile click listeners
-        profileImage?.setOnClickListener {
-            val intent = ProfileActivity.newIntent(this)
-            intent.putExtra("userId", currentUserId)
-            startActivity(intent)
-        }
-        profileInfoContainer?.setOnClickListener {
-            val intent = ProfileActivity.newIntent(this)
-            intent.putExtra("userId", currentUserId)
-            startActivity(intent)
-        }
-
-        // Notifications button click listener
-        btnNotifications?.setOnClickListener {
-            val intent = Intent(this, NotificationActivity::class.java)
-            startActivity(intent)
-        }
-
-        // Feed filter click listeners
-        chipAll?.setOnClickListener {
-            chipAll.isChecked = true
-            chipNearMe.isChecked = false
-            
-            // รีเซ็ต province filter
-            currentProvince = null
-            
-            // รีเซ็ต realtime listener เพื่อไม่ใช้ province filter
-            resetRealtimeListener()
-            
-            showLoading()
-            fetchPostsOptimized(filter = "all", paginate = false)
-        }
-        chipNearMe?.setOnClickListener {
-            chipAll.isChecked = false
-            chipNearMe.isChecked = true
-            showLoading()
-            
-            // เพิ่ม debug เพื่อตรวจสอบโพสต์ใน Firebase
-            debugCheckPostsInFirebase()
-            
-            fetchCurrentProvince()
-        }
-
-        // เพิ่ม empty state และ loading indicator
-        emptyFeedTextView = TextView(this).apply {
-            text = getString(R.string.feed_empty)
-            textSize = 16f
-            setTextColor(ContextCompat.getColor(context, R.color.text_hint))
-            visibility = View.GONE
-            textAlignment = View.TEXT_ALIGNMENT_CENTER
-        }
-        loadingProgressBar = ProgressBar(this).apply {
-            visibility = View.GONE
-        }
-
-        // Add views to parent safely
-        (recyclerViewFeed.parent as? ViewGroup)?.let { parent ->
-            parent.addView(emptyFeedTextView)
-            parent.addView(loadingProgressBar)
         }
 
         swipeRefreshLayout?.setOnRefreshListener {
@@ -289,19 +200,13 @@ class CustomerMainActivity : AppCompatActivity() {
         recyclerViewFeed.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                
-                // ตรวจสอบเงื่อนไขต่างๆ ก่อน
                 if (isLoading || isLastPage || !isNetworkAvailable()) return
-
                 val layoutManager = recyclerView.layoutManager as LinearLayoutManager
                 val visibleItemCount = layoutManager.childCount
                 val totalItemCount = layoutManager.itemCount
                 val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
-
-                // ตรวจสอบว่าถึงจุดที่ควรโหลดเพิ่มหรือไม่ (เมื่อเหลือ 3 รายการ)
                 val threshold = 3
                 val isNearEnd = (visibleItemCount + firstVisibleItemPosition) >= (totalItemCount - threshold)
-                
                 if (isNearEnd && postList.size >= PAGE_SIZE) {
                     loadMorePosts()
                 }
@@ -311,10 +216,12 @@ class CustomerMainActivity : AppCompatActivity() {
         loadingIndicator = findViewById(R.id.loadingIndicator)
         emptyFeedTextView = findViewById(R.id.emptyFeedTextView)
 
-        // Fetch initial posts
+        // Initialize Animated Animals View
+        val animatedAnimalsView = binding.animatedAnimalsView
+        animatedAnimalsView?.startRandomAnimalSpawn()
+        setupAnimalInteractions(animatedAnimalsView)
         fetchPostsOptimized(filter = "all", paginate = false)
         setupRealtimeListener()
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
@@ -327,6 +234,7 @@ class CustomerMainActivity : AppCompatActivity() {
         if (postList.isEmpty()) {
             refreshFeed()
         }
+        // ไม่ scroll ไปด้านบนใน onStart เพื่อป้องกันการเด้งไปด้านบน
     }
 
     override fun onStop() {
@@ -335,99 +243,68 @@ class CustomerMainActivity : AppCompatActivity() {
     }
 
     private fun loadUserProfile() {
-        try {
-            currentUserId?.let { userId ->
-                firestore.collection("users").document(userId)
-                    .get()
-                    .addOnSuccessListener { document ->
-                        try {
-                            if (document.exists()) {
-                                val displayName = document.getString("displayName") ?: "ผู้ใช้"
-                                val status = document.getString("status") ?: ""
-                                val storeName = document.getString("storeName") ?: ""
-                                val avatarId = document.getLong("avatarId")?.toInt() ?: -1 // Get avatarId
-                                
-                                userName.text = displayName
-                                userStatus.text = status
-                                tvStoreName.text = storeName
-
-                                // Load profile image safely
-                                val profileImageUrl = document.getString("profileImageUrl")
-                                if (!profileImageUrl.isNullOrEmpty()) {
-                                    try {
-                                        Glide.with(this)
-                                            .load(profileImageUrl)
-                                            .error(R.drawable.ic_profile)
-                                            .into(profileImage)
-                                        Glide.with(this)
-                                            .load(profileImageUrl)
-                                            .error(R.drawable.ic_profile)
-                                            .into(profileImageCreatePost)
-                                    } catch (e: Exception) {
-                                        Log.e("CustomerMainActivity", "Error loading profile image: ${e.message}")
-                                        profileImage.setImageResource(R.drawable.ic_profile)
-                                        profileImageCreatePost.setImageResource(R.drawable.ic_profile)
-                                    }
-                                } else if (avatarId != -1 && avatarId < AvatarResources.avatarList.size) {
-                                    // If profileImageUrl is empty, use avatarId
-                                    profileImage.setImageResource(AvatarResources.avatarList[avatarId])
-                                    profileImageCreatePost.setImageResource(AvatarResources.avatarList[avatarId])
-                                } else {
-                                    // Fallback to default if neither is available
-                                    profileImage.setImageResource(R.drawable.ic_profile)
-                                    profileImageCreatePost.setImageResource(R.drawable.ic_profile)
-                                }
-
-                            }
-                        } catch (e: Exception) {
-                            Log.e("CustomerMainActivity", "Error processing user data: ${e.message}")
-                            Toast.makeText(this, "เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("CustomerMainActivity", "Error loading user profile: ${e.message}")
-                        Toast.makeText(this, "เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้", Toast.LENGTH_SHORT).show()
-                    }
-            }
-        } catch (e: Exception) {
-            Log.e("CustomerMainActivity", "Error in loadUserProfile: ${e.message}")
-            Toast.makeText(this, "เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้", Toast.LENGTH_SHORT).show()
-        }
+        // Update header profile through FeedAdapter
+        feedAdapter.updateHeaderProfile()
     }
 
     private fun setDefaultProfileImage() {
-         profileImage.setImageResource(R.drawable.ic_default_user)
-         profileImageCreatePost.setImageResource(R.drawable.ic_default_user)
+        // Profile images are now handled in the header view
     }
 
     private fun loadImage(imageView: ShapeableImageView, imageUrl: String?) {
-        if (imageUrl.isNullOrEmpty()) {
-            imageView.setImageResource(R.drawable.ic_default_user)
-            return
-        }
-
-        val requestOptions = com.bumptech.glide.request.RequestOptions()
-            .circleCrop()
-            .placeholder(R.drawable.ic_default_user)
-            .error(R.drawable.ic_default_user)
-
-        Glide.with(imageView.context)
-            .load(imageUrl)
-            .apply(requestOptions)
-            .into(imageView)
+        // Image loading is now handled in the header view
     }
 
     override fun onResume() {
         super.onResume()
         // Reload profile when returning to this activity
-        loadUserProfile()
+        feedAdapter.updateHeaderProfile()
+        
+        // Sync like status from Firestore to ensure consistency (only if needed)
+        // ไม่เรียก syncLikeStatusFromFirestore() ใน onResume เพื่อป้องกันการเด้งไปด้านบน
+        
+        // ไม่ scroll ไปด้านบนใน onResume เพื่อป้องกันการเด้งไปด้านบนเมื่อกลับมาที่หน้าฟีด
     }
 
     private fun setDefaultProfile() {
-        userName.text = "User"
-        userStatus.text = ""
-        profileImage.setImageResource(R.drawable.ic_default_user)
-        profileImageCreatePost.setImageResource(R.drawable.ic_default_user)
+        // Profile display is now handled in the header view
+    }
+    
+    private fun setupAnimalInteractions(animatedAnimalsView: AnimatedAnimalsView?) {
+        animatedAnimalsView?.let { animalsView ->
+            // Set up interaction listeners for like, comment, and boost buttons
+            // These will be called from the FeedAdapter when users interact with posts
+            
+            // Example: When a post is liked, trigger animal heart animation
+            // This will be implemented in the FeedAdapter
+        }
+    }
+    
+    private fun handleAnimalInteraction(interactionType: String) {
+        val animatedAnimalsView = binding.animatedAnimalsView
+        Log.d("CustomerMainActivity", "Received animal interaction: $interactionType")
+        when (interactionType) {
+            "like" -> {
+                Log.d("CustomerMainActivity", "Calling onLikePressed")
+                animatedAnimalsView?.onLikePressed()
+            }
+            "unlike" -> {
+                Log.d("CustomerMainActivity", "Calling onLikeUnpressed")
+                animatedAnimalsView?.onLikeUnpressed()
+            }
+            "comment" -> {
+                Log.d("CustomerMainActivity", "Calling onCommentPressed")
+                animatedAnimalsView?.onCommentPressed()
+            }
+            "boost" -> {
+                android.util.Log.d("CustomerMainActivity", "Received boost interaction - calling onBoostPressed")
+                animatedAnimalsView?.onBoostPressed()
+            }
+            "unboost" -> {
+                android.util.Log.d("CustomerMainActivity", "Received unboost interaction - calling onBoostUnpressed")
+                animatedAnimalsView?.onBoostUnpressed()
+            }
+        }
     }
 
     private fun setupRealtimeListener() {
@@ -519,12 +396,12 @@ class CustomerMainActivity : AppCompatActivity() {
                                                 post.isLiked = post.postId != null && likedPostIds.contains(post.postId)
                                             }
                                             
-                                            // เรียงลำดับและอัพเดท UI
-                                            updatePostsList(fetchedPosts, paginate = false)
+                                            // เรียงลำดับและอัพเดท UI โดยไม่ทำให้ scroll ไปด้านบน
+                                            updatePostsListWithoutScroll(fetchedPosts, paginate = false)
                                         }
                                 } else {
                                     // อัพเดท UI โดยไม่มีข้อมูลไลค์
-                                    updatePostsList(fetchedPosts, paginate = false)
+                                    updatePostsListWithoutScroll(fetchedPosts, paginate = false)
                                 }
                             }
                         }
@@ -564,10 +441,10 @@ class CustomerMainActivity : AppCompatActivity() {
                         post.boostCount = boostCount
                         post.isBoosted = currentUserId != null && boostedUsers.contains(currentUserId)
                         
-                        // อัพเดท UI
+                        // อัพเดท UI โดยไม่ทำให้ scroll ไปด้านบน
                         val position = postList.indexOf(post)
                         if (position != -1) {
-                            feedAdapter.notifyItemChanged(position)
+                            feedAdapter.notifyItemChanged(position + 1) // +1 เพราะมี header
                         }
                     }
                 }
@@ -593,6 +470,63 @@ class CustomerMainActivity : AppCompatActivity() {
         isLoading = false
         swipeRefreshLayout.isRefreshing = false
         showContent()
+        
+        // Scroll to top when loading new posts (not pagination)
+        if (!paginate && posts.isNotEmpty()) {
+            recyclerViewFeed.post {
+                recyclerViewFeed.smoothScrollToPosition(0)
+            }
+        }
+    }
+
+    private fun updatePostsListWithoutScroll(posts: List<Post>, paginate: Boolean) {
+        // ซ่อน loading indicator
+        feedAdapter.setLoading(false)
+        
+        if (paginate) {
+            postList.addAll(posts)
+        } else {
+            // ตรวจสอบว่าข้อมูลเปลี่ยนแปลงจริงหรือไม่
+            val hasSignificantChanges = posts.size != postList.size || 
+                posts.any { newPost -> 
+                    postList.none { oldPost -> 
+                        oldPost.postId == newPost.postId && 
+                        oldPost.postText == newPost.postText &&
+                        oldPost.postImageUrl == newPost.postImageUrl
+                    }
+                }
+            
+            if (hasSignificantChanges) {
+                postList.clear()
+                postList.addAll(posts)
+                feedAdapter.submitList(postList.toList())
+                
+                // Scroll to top when loading new posts (not pagination)
+                if (posts.isNotEmpty()) {
+                    recyclerViewFeed.post {
+                        recyclerViewFeed.smoothScrollToPosition(0)
+                    }
+                }
+            } else {
+                // อัพเดทเฉพาะข้อมูลที่เปลี่ยนแปลงโดยไม่ทำให้ scroll ไปด้านบน
+                posts.forEach { newPost ->
+                    val existingIndex = postList.indexOfFirst { it.postId == newPost.postId }
+                    if (existingIndex != -1) {
+                        val existingPost = postList[existingIndex]
+                        // อัพเดทเฉพาะข้อมูลที่จำเป็น
+                        existingPost.nickname = newPost.nickname
+                        existingPost.displayName = newPost.displayName
+                        existingPost.postTime = newPost.postTime
+                        // ไม่อัพเดท likeCount, isLiked, commentCount, boostCount, isBoosted
+                        // เพื่อป้องกันการเด้งไปด้านบน
+                    }
+                }
+            }
+        }
+        
+        isLoading = false
+        swipeRefreshLayout.isRefreshing = false
+        showContent()
     }
 
     override fun onDestroy() {
@@ -600,6 +534,9 @@ class CustomerMainActivity : AppCompatActivity() {
         // ยกเลิก listeners เมื่อ Activity ถูกทำลาย
         listeners.forEach { it.remove() }
         listeners.clear()
+        
+        // Stop animated animals
+        binding.animatedAnimalsView?.stop()
     }
 
     private fun refreshFeed() {
@@ -610,13 +547,12 @@ class CustomerMainActivity : AppCompatActivity() {
         // Reset realtime listener
         resetRealtimeListener()
         
-        // Fetch posts with current filter
-        val filter = when {
-            chipNearMe.isChecked -> "nearMe"
-            else -> "all"
-        }
+        // Fetch posts with current filter - use currentFilterState from FeedAdapter
+        val filter = if (feedAdapter.currentFilterState) "all" else "nearMe"
         
         fetchPostsOptimized(filter, paginate = false, provinceFilter = currentProvince)
+        
+        // ไม่ต้อง scroll ไปด้านบนที่นี่ เพราะ updatePostsListWithoutScroll จะจัดการแล้ว
     }
 
     private fun loadMorePosts() {
@@ -649,26 +585,47 @@ class CustomerMainActivity : AppCompatActivity() {
             return
         }
 
-        if (processingLikePostIds.contains(postId)) return
+        if (processingLikePostIds.contains(postId)) {
+            Log.d("CustomerMainActivity", "Already processing like for post: $postId")
+            return
+        }
         processingLikePostIds.add(postId)
 
+        // หา post ใน list และเก็บสถานะปัจจุบัน
         val postIndex = postList.indexOfFirst { it.postId == postId }
-        if (postIndex != -1) {
-            feedAdapter.notifyItemChanged(postIndex)
+        if (postIndex == -1) {
+            Log.e("CustomerMainActivity", "Post not found in list: $postId")
+            processingLikePostIds.remove(postId)
+            return
         }
+        
+        val postToUpdate = postList[postIndex]
+        val isCurrentlyLiked = postToUpdate.isLiked
+        
+        Log.d("CustomerMainActivity", "Toggling like for post: $postId, current state: $isCurrentlyLiked")
+        
+        // อัพเดท UI แบบ optimistic ทันที
+        postToUpdate.isLiked = !isCurrentlyLiked
+        postToUpdate.likeCount = if (isCurrentlyLiked) postToUpdate.likeCount - 1 else postToUpdate.likeCount + 1
+        
+        Log.d("CustomerMainActivity", "Updated post state - isLiked: ${postToUpdate.isLiked}, likeCount: ${postToUpdate.likeCount}")
+        
+        // อัพเดท UI โดยไม่ทำให้ scroll ไปด้านบน
+        feedAdapter.notifyItemChanged(postIndex + 1) // +1 เพราะมี header
 
         val postRef = firestore.collection("posts").document(postId)
         val likeRef = firestore.collection("likes").document("${postId}_${userId}")
-        val isCurrentlyLiked = post.isLiked
 
         val batch = firestore.batch()
         if (isCurrentlyLiked) {
             // Unlike
+            Log.d("CustomerMainActivity", "Removing like for post: $postId")
             batch.update(postRef, "likes", FieldValue.arrayRemove(userId))
             batch.update(postRef, "likeCount", FieldValue.increment(-1))
             batch.delete(likeRef)
         } else {
             // Like
+            Log.d("CustomerMainActivity", "Adding like for post: $postId")
             batch.update(postRef, "likes", FieldValue.arrayUnion(userId))
             batch.update(postRef, "likeCount", FieldValue.increment(1))
             batch.set(likeRef, mapOf(
@@ -680,25 +637,29 @@ class CustomerMainActivity : AppCompatActivity() {
 
         batch.commit().addOnCompleteListener {
             processingLikePostIds.remove(postId)
-            // After the batch commit, we rely on the realtime listener to update the UI.
-            // For a faster perceived update, we can fetch the single post and update it.
-            postRef.get().addOnSuccessListener { updatedDoc ->
-                if (updatedDoc.exists()) {
-                    val finalIndex = postList.indexOfFirst { it.postId == postId }
-                    if (finalIndex != -1) {
-                        val postToUpdate = postList[finalIndex]
-                        postToUpdate.likeCount = updatedDoc.getLong("likeCount")?.toInt() ?: postToUpdate.likeCount
-                        when (val likes = updatedDoc.get("likes")) {
-                            is List<*> -> {
-                                postToUpdate.isLiked = likes.filterIsInstance<String>().contains(userId)
-                            }
-                        }
-                        feedAdapter.notifyItemChanged(finalIndex)
-                    }
+            
+            // อัพเดท like button state ใน FeedAdapter
+            feedAdapter.updateLikeButtonStateForPost(postId)
+            
+            // ตรวจสอบผลลัพธ์และอัพเดท UI ถ้าจำเป็น
+            if (!it.isSuccessful) {
+                Log.e("CustomerMainActivity", "Like operation failed for post: $postId")
+                // ถ้าเกิดข้อผิดพลาด ให้ย้อนกลับสถานะ
+                postToUpdate.isLiked = isCurrentlyLiked
+                postToUpdate.likeCount = if (isCurrentlyLiked) postToUpdate.likeCount + 1 else postToUpdate.likeCount - 1
+                feedAdapter.notifyItemChanged(postIndex + 1)
+                // อัพเดท like button state ใน FeedAdapter
+                feedAdapter.updateLikeButtonStateForPost(postId)
+                Toast.makeText(this, "เกิดข้อผิดพลาดในการกดไลค์", Toast.LENGTH_SHORT).show()
+            } else {
+                Log.d("CustomerMainActivity", "Like operation successful for post: $postId")
+                // ส่งการแจ้งเตือนถ้าเป็นการไลค์
+                if (!isCurrentlyLiked) {
+                    sendNotification(post.userId, "like", post.postId)
                 }
-            }
-            if (it.isSuccessful && !isCurrentlyLiked) {
-                sendNotification(post.userId, "like", post.postId)
+                
+                // ไม่ต้อง sync like status เพราะเราได้อัพเดท UI แบบ optimistic แล้ว
+                // และการ sync อาจทำให้เกิดการเด้งไปด้านบน
             }
         }
     }
@@ -892,11 +853,16 @@ class CustomerMainActivity : AppCompatActivity() {
     }
     private fun resetToAllFilter(message: String) {
         showContent()
-        chipAll.isChecked = true
-        chipNearMe.isChecked = false
+        // Update chip state through FeedAdapter
+        feedAdapter.setFilterState(true) // true = all filter
         
         // โหลดโพสต์ทั้งหมดใหม่
         fetchPostsOptimized(filter = "all", paginate = false)
+        
+        // Scroll to top when resetting filter
+        recyclerViewFeed.post {
+            recyclerViewFeed.smoothScrollToPosition(0)
+        }
     }
 
     private fun fetchCurrentProvince() {
@@ -1023,6 +989,11 @@ class CustomerMainActivity : AppCompatActivity() {
                     // โหลดโพสต์ใหม่
                     fetchPostsOptimized(filter = "all", paginate = false, provinceFilter = normalizedProvince)
                     Toast.makeText(this, "แสดงฟีดในจังหวัด: $normalizedProvince", Toast.LENGTH_SHORT).show()
+                    
+                    // Scroll to top when loading posts from new province
+                    recyclerViewFeed.post {
+                        recyclerViewFeed.smoothScrollToPosition(0)
+                    }
                 } else {
                     Log.e("CustomerMainActivity", "Normalized province is null or empty")
                     resetToAllFilter("ไม่พบข้อมูลจังหวัดจากตำแหน่งปัจจุบัน")
@@ -1414,7 +1385,7 @@ class CustomerMainActivity : AppCompatActivity() {
 
     private fun loadRelatedDataBatch(posts: List<Post>, paginate: Boolean, provinceFilter: String?) {
         if (posts.isEmpty()) {
-            updatePostsList(posts, paginate)
+            updatePostsListWithoutScroll(posts, paginate)
             return
         }
 
@@ -1448,13 +1419,13 @@ class CustomerMainActivity : AppCompatActivity() {
         
         // Execute all batch queries
         if (batchTasks.isEmpty()) {
-            updatePostsList(posts, paginate)
+            updatePostsListWithoutScroll(posts, paginate)
         } else {
             Tasks.whenAllComplete(batchTasks).addOnSuccessListener {
                 processBatchData(posts, batchTasks, paginate)
             }.addOnFailureListener { e ->
                 Log.e("CustomerMainActivity", "Error in batch queries: ${e.message}")
-                updatePostsList(posts, paginate)
+                updatePostsListWithoutScroll(posts, paginate)
             }
         }
     }
@@ -1478,8 +1449,12 @@ class CustomerMainActivity : AppCompatActivity() {
                 val likeSnapshot = tasks[1].result as QuerySnapshot
                 val likedPostIds = likeSnapshot.documents.map { it.getString("postId") }.toSet()
                 
+                Log.d("CustomerMainActivity", "Found ${likedPostIds.size} liked posts for current user")
+                
                 posts.forEach { post ->
+                    val wasLiked = post.isLiked
                     post.isLiked = post.postId != null && likedPostIds.contains(post.postId)
+                    Log.d("CustomerMainActivity", "Post ${post.postId} like status: $wasLiked -> ${post.isLiked}")
                 }
             }
             
@@ -1502,11 +1477,11 @@ class CustomerMainActivity : AppCompatActivity() {
                     .thenByDescending { it.postTime }
             )
             
-            updatePostsList(sortedPosts, paginate)
+            updatePostsListWithoutScroll(sortedPosts, paginate)
             
         } catch (e: Exception) {
             Log.e("CustomerMainActivity", "Error processing batch data: ${e.message}")
-            updatePostsList(posts, paginate)
+            updatePostsListWithoutScroll(posts, paginate)
         }
     }
 
@@ -1524,6 +1499,140 @@ class CustomerMainActivity : AppCompatActivity() {
         } else {
             showError("เกิดข้อผิดพลาดในการโหลดข้อมูล\nกรุณาลองใหม่อีกครั้ง")
         }
+    }
+
+    private fun handleHeaderEvent(event: FeedAdapter.HeaderEvent) {
+        when (event) {
+            FeedAdapter.HeaderEvent.HomeClick -> {
+                recyclerViewFeed.smoothScrollToPosition(0)
+            }
+            FeedAdapter.HeaderEvent.CheckinClick -> {
+                val intent = CheckInActivity.newIntent(this)
+                startActivity(intent)
+            }
+            FeedAdapter.HeaderEvent.ProfileClick -> {
+                currentUserId?.let { userId ->
+                    firestore.collection("users").document(userId)
+                        .get()
+                        .addOnSuccessListener { userDoc ->
+                            if (userDoc.exists()) {
+                                val isStore = userDoc.getBoolean("isStore") ?: false
+                                if (isStore) {
+                                    val intent = Intent(this, StoreProfileActivity::class.java)
+                                    intent.putExtra("storeId", userId)
+                                    startActivity(intent)
+                                } else {
+                                    val intent = ProfileActivity.newIntent(this)
+                                    intent.putExtra("userId", userId)
+                                    startActivity(intent)
+                                }
+                            } else {
+                                val intent = ProfileActivity.newIntent(this)
+                                intent.putExtra("userId", userId)
+                                startActivity(intent)
+                            }
+                        }
+                        .addOnFailureListener {
+                            val intent = ProfileActivity.newIntent(this)
+                            intent.putExtra("userId", userId)
+                            startActivity(intent)
+                        }
+                }
+            }
+            FeedAdapter.HeaderEvent.CreatePostClick -> {
+                checkPostLimit { canPost ->
+                    if (canPost) {
+                        val intent = Intent(this, CreatePostActivity::class.java)
+                        createPostActivityResultLauncher.launch(intent)
+                    } else {
+                        val intent = Intent(this, PremiumSubscriptionActivity::class.java)
+                        startActivity(intent)
+                    }
+                }
+            }
+            FeedAdapter.HeaderEvent.AddPhotoClick -> {
+                checkPremiumStatus { isPremium ->
+                    if (isPremium) {
+                        val intent = Intent(this, CreatePostActivity::class.java)
+                        createPostActivityResultLauncher.launch(intent)
+                    } else {
+                        Toast.makeText(this, "ฟีเจอร์อัปโหลดรูปภาพสำหรับสมาชิกพรีเมียมเท่านั้น", Toast.LENGTH_SHORT).show()
+                        val intent = Intent(this, PremiumSubscriptionActivity::class.java)
+                        startActivity(intent)
+                    }
+                }
+            }
+            FeedAdapter.HeaderEvent.ChipAllClick -> {
+                // Update chip state through FeedAdapter
+                feedAdapter.setFilterState(true) // true = all filter
+                currentProvince = null
+                resetRealtimeListener()
+                showLoading()
+                fetchPostsOptimized(filter = "all", paginate = false)
+                
+                // Scroll to top when changing filter
+                recyclerViewFeed.post {
+                    recyclerViewFeed.smoothScrollToPosition(0)
+                }
+            }
+            FeedAdapter.HeaderEvent.ChipNearMeClick -> {
+                // Update chip state through FeedAdapter
+                feedAdapter.setFilterState(false) // false = nearMe filter
+                showLoading()
+                debugCheckPostsInFirebase()
+                fetchCurrentProvince()
+                
+                // Scroll to top when changing filter
+                recyclerViewFeed.post {
+                    recyclerViewFeed.smoothScrollToPosition(0)
+                }
+            }
+            FeedAdapter.HeaderEvent.NotificationClick -> {
+                val intent = Intent(this, NotificationActivity::class.java)
+                startActivity(intent)
+            }
+            else -> {
+                // Handle any future header events
+                Log.d("CustomerMainActivity", "Unhandled header event: $event")
+            }
+        }
+    }
+
+    // Function to sync like status from Firestore
+    private fun syncLikeStatusFromFirestore() {
+        if (currentUserId == null || postList.isEmpty()) return
+        
+        val postIds = postList.mapNotNull { it.postId }
+        if (postIds.isEmpty()) return
+        
+        Log.d("CustomerMainActivity", "Syncing like status for ${postIds.size} posts")
+        
+        firestore.collection("likes")
+            .whereEqualTo("userId", currentUserId)
+            .whereIn("postId", postIds)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val likedPostIds = snapshot.documents.map { it.getString("postId") }.toSet()
+                
+                var updatedCount = 0
+                postList.forEachIndexed { index, post ->
+                    val wasLiked = post.isLiked
+                    post.isLiked = post.postId != null && likedPostIds.contains(post.postId)
+                    if (wasLiked != post.isLiked) {
+                        updatedCount++
+                        Log.d("CustomerMainActivity", "Post ${post.postId} like status corrected: $wasLiked -> ${post.isLiked}")
+                        // อัพเดทเฉพาะ item ที่เปลี่ยนแปลง โดยไม่ทำให้ scroll ไปด้านบน
+                        feedAdapter.notifyItemChanged(index + 1) // +1 เพราะมี header
+                    }
+                }
+                
+                if (updatedCount > 0) {
+                    Log.d("CustomerMainActivity", "Updated like status for $updatedCount posts")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("CustomerMainActivity", "Error syncing like status: ${e.message}")
+            }
     }
 }
 

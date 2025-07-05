@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="32dp"
+            android:height="24dp"
+            android:viewportWidth="32"
+            android:viewportHeight="24">
+            
+            <!-- Cat body (flipped) -->
+            <path
+                android:name="catBody"
+                android:fillColor="#FF9800"
+                android:pathData="M8,16 L24,16 L24,20 L8,20 Z" />
+            
+            <!-- Cat head (flipped) -->
+            <path
+                android:name="catHead"
+                android:fillColor="#FF9800"
+                android:pathData="M14,12 L26,12 L26,16 L14,16 Z" />
+            
+            <!-- Cat ears (flipped) -->
+            <path
+                android:name="catEars"
+                android:fillColor="#FF9800"
+                android:pathData="M12,10 L14,8 L16,10 L14,12 Z M20,10 L22,8 L24,10 L22,12 Z" />
+            
+            <!-- Cat tail (flipped) -->
+            <path
+                android:name="catTail"
+                android:fillColor="#FF9800"
+                android:pathData="M8,18 L4,16 L4,20 L8,18 Z" />
+            
+            <!-- Cat eyes (flipped) -->
+            <path
+                android:name="catEars"
+                android:fillColor="#000000"
+                android:pathData="M17,13 L18,13 L18,14 L17,14 Z M23,13 L24,13 L24,14 L23,14 Z" />
+            
+            <!-- Cat nose (flipped) -->
+            <path
+                android:name="catNose"
+                android:fillColor="#FF5722"
+                android:pathData="M20,14 L21,14 L21,15 L20,15 Z" />
+        </vector>
+    </aapt:attr>
+    
+    <!-- Cat running animation -->
+    <target android:name="catBody">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="500"
+                    android:propertyName="pathData"
+                    android:valueFrom="M8,16 L24,16 L24,20 L8,20 Z"
+                    android:valueTo="M8,15 L24,15 L24,19 L8,19 Z"
+                    android:valueType="pathType"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse" />
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Cat tail wagging -->
+    <target android:name="catTail">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="300"
+                    android:propertyName="pathData"
+                    android:valueFrom="M8,18 L4,16 L4,20 L8,18 Z"
+                    android:valueTo="M8,18 L4,14 L4,18 L8,18 Z"
+                    android:valueType="pathType"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector> 

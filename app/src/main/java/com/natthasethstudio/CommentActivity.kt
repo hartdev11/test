@@ -39,6 +39,9 @@ class CommentActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_comment)
+        
+        // Set default result as cancelled
+        setResult(RESULT_CANCELED)
 
         // อ้างอิง View จาก Layout
         toolbarComment = findViewById(R.id.toolbarComment)
@@ -50,6 +53,7 @@ class CommentActivity : AppCompatActivity() {
         setSupportActionBar(toolbarComment)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbarComment.setNavigationOnClickListener {
+            setResult(RESULT_CANCELED) // User cancelled without commenting
             finish()
         }
 
@@ -195,6 +199,7 @@ class CommentActivity : AppCompatActivity() {
                                     buttonPostComment.isEnabled = true // เปิดปุ่มอีกครั้ง
                                 }
                                 createCommentNotification(postId, userId, nickname ?: name ?: "ผู้ใช้", avatarId ?: 0)
+                                setResult(RESULT_OK) // User successfully commented
                             }
                             .addOnFailureListener { e ->
                                 Log.w("CommentActivity", "Error posting comment: ", e)

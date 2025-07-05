@@ -23,282 +23,56 @@
         layout="@layout/empty_state"
         android:visibility="gone" />
 
-    <LinearLayout
+    <!-- Animated Animals View -->
+    <com.natthasethstudio.sethpos.AnimatedAnimalsView
+        android:id="@+id/animatedAnimalsView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="200dp"
+        android:layout_gravity="top"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/transparent"
+        android:elevation="1dp" />
 
-        <!-- Top Navigation Bar with Enhanced Design -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/topNavigationBar"
+    <!-- Feed RecyclerView with Enhanced Design -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewFeed"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:padding="8dp" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="8dp">
+    <!-- Premium Button with Enhanced Design -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGoToPremium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="อัพเกรดเป็นพรีเมียม"
+        android:visibility="gone"
+        app:cornerRadius="12dp"
+        app:elevation="2dp" />
 
-                <LinearLayout
-                    android:id="@+id/topNavHome"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:background="?attr/selectableItemBackground">
+    <ProgressBar
+        android:id="@+id/loadingIndicator"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:visibility="gone" />
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_home"
-                        android:tint="?attr/colorPrimary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="หน้าแรก"
-                        android:textColor="?attr/colorPrimary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/topNavCheckin"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:background="?attr/selectableItemBackground">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_checkin"
-                        android:tint="?attr/colorPrimary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="เช็คอิน"
-                        android:textColor="?attr/colorPrimary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/topNavProfile"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:background="?attr/selectableItemBackground">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_profile"
-                        android:tint="?attr/colorPrimary" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="โปรไฟล์"
-                        android:textColor="?attr/colorPrimary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Profile Section with Enhanced Design -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/profileInfoContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp">
-
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/profileImageMain"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:scaleType="centerCrop"
-                    app:shapeAppearanceOverlay="@style/CircleImageView" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/userName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/userStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/tvStoreName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="14sp"
-                        android:visibility="gone" />
-                </LinearLayout>
-
-                <ImageButton
-                    android:id="@+id/btnNotifications"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="การแจ้งเตือน"
-                    android:src="@drawable/ic_notifications" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Create Post Bar with Enhanced Design -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/createPostBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="12dp"
-                android:background="?attr/selectableItemBackground">
-
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/profileImageCreatePost"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:scaleType="centerCrop" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
-                    android:layout_gravity="center_vertical"
-                    android:text="เขียนโพสต์อะไรบางอย่าง..."
-                    android:textColor="@android:color/darker_gray" />
-
-                <ImageButton
-                    android:id="@+id/addPhotoButton"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="เพิ่มรูปภาพ"
-                    android:src="@drawable/ic_add_photo" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Filter Chips with Enhanced Design -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
-
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="none">
-
-                <com.google.android.material.chip.ChipGroup
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipAll"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ทั้งหมด"
-                        android:textColor="@color/chip_text"
-                        app:chipBackgroundColor="@color/chip_background"
-                        app:chipStrokeColor="@color/chip_stroke"
-                        app:chipStrokeWidth="1dp" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipNearMe"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ใกล้ฉัน"
-                        android:textColor="@color/chip_text"
-                        app:chipBackgroundColor="@color/chip_background"
-                        app:chipStrokeColor="@color/chip_stroke"
-                        app:chipStrokeWidth="1dp" />
-                </com.google.android.material.chip.ChipGroup>
-            </HorizontalScrollView>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Feed RecyclerView with Enhanced Design -->
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/swipeRefreshLayout"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewFeed"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipToPadding="false"
-                android:padding="8dp" />
-        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
-        <!-- Premium Button with Enhanced Design -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGoToPremium"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:text="อัพเกรดเป็นพรีเมียม"
-            android:visibility="gone"
-            app:cornerRadius="12dp"
-            app:elevation="2dp" />
-
-        <ProgressBar
-            android:id="@+id/loadingIndicator"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="center"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/emptyFeedTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ไม่พบโพสต์ในพื้นที่นี้"
-            android:textSize="16sp"
-            android:textColor="@color/text_hint"
-            android:layout_gravity="center"
-            android:visibility="gone" />
-
-    </LinearLayout>
+    <TextView
+        android:id="@+id/emptyFeedTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ไม่พบโพสต์ในพื้นที่นี้"
+        android:textSize="16sp"
+        android:textColor="@color/text_hint"
+        android:layout_gravity="center"
+        android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 

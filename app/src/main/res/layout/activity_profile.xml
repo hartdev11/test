@@ -3,50 +3,72 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="#F5F7FA"
+    android:clipChildren="false">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbarProfile"
+    <!-- Header with animated background -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:elevation="4dp"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+        android:layout_height="180dp">
+
+        <ImageView
+            android:id="@+id/profileBackgroundImage"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:scaleType="centerCrop" />
+
+        <!-- Overlay for better text readability -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:background="#33000000" />
+    </FrameLayout>
+
+    <!-- Avatar overlap (อยู่นอก ScrollView) -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="-60dp"
+        app:cardCornerRadius="60dp"
+        app:cardElevation="6dp"
+        app:strokeWidth="2dp"
+        app:strokeColor="#FFFFFF">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/currentAvatarImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_profile" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- ProgressBar สำหรับโหลดข้อมูล -->
+    <ProgressBar
+        android:id="@+id/profileProgressBar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:visibility="gone" />
 
     <ScrollView
+        android:id="@+id/scrollViewProfile"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:clipToPadding="false">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingTop="40dp"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp">
 
-            <FrameLayout
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp">
-
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/currentAvatarImage"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_profile" />
-
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/changeProfileImageButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
-                    android:layout_margin="-4dp"
-                    android:src="@drawable/ic_camera" />
-
-            </FrameLayout>
-
+            <!-- ชื่อผู้ใช้ -->
             <TextView
                 android:id="@+id/textViewProfileName"
                 android:layout_width="match_parent"
@@ -54,63 +76,109 @@
                 android:textSize="24sp"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:layout_marginBottom="8dp"/>
+                android:textColor="#222222"
+                android:layout_marginBottom="4dp"/>
 
+            <!-- อีเมล -->
             <TextView
                 android:id="@+id/textViewProfileEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
                 android:gravity="center"
-                android:layout_marginBottom="24dp"/>
+                android:textColor="#666666"
+                android:layout_marginBottom="16dp"/>
 
+            <!-- ปุ่มเปลี่ยนรูปโปรไฟล์ -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/buttonFollowToggle"
+                android:id="@+id/changeProfileImageButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:text="ติดตาม"
-                android:visibility="gone"
+                android:text="เปลี่ยนรูปโปรไฟล์"
+                app:icon="@drawable/ic_camera"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:cornerRadius="24dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- ปุ่มเปลี่ยนพื้นหลัง -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/changeBackgroundButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="เปลี่ยนพื้นหลัง"
+                app:icon="@drawable/ic_image"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:cornerRadius="24dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_marginBottom="24dp"/>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/textInputLayoutPassword"
+            <!-- แสดงชื่อสถานที่ปัจจุบัน -->
+            <TextView
+                android:id="@+id/locationNameText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                android:textSize="14sp"
+                android:gravity="center"
+                android:textColor="#666666"
+                android:layout_marginBottom="24dp"/>
 
-                <EditText
-                    android:id="@+id/editTextProfilePassword"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="รหัสผ่าน"
-                    android:inputType="textPassword"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/textInputLayoutNickname"
+            <!-- CardView ข้อมูลผู้ใช้ -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                android:layout_marginBottom="24dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editTextProfileNickname"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="ชื่อเล่น"/>
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/textInputLayoutPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
+                        <EditText
+                            android:id="@+id/editTextProfilePassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="รหัสผ่าน"
+                            android:inputType="textPassword"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/textInputLayoutNickname"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editTextProfileNickname"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="ชื่อเล่น"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Avatar เลือกได้ -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="เลือกรูปโปรไฟล์"
+                android:text="เลือกอวาตาร์"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="8dp"/>
 
             <HorizontalScrollView
                 android:layout_width="match_parent"
@@ -122,25 +190,84 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:singleSelection="true"/>
-
             </HorizontalScrollView>
 
+            <!-- การตั้งค่า -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                android:layout_marginBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="การตั้งค่า"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp"/>
+
+                    <!-- การตั้งค่า Animation -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/animated_cat"
+                            android:layout_marginEnd="12dp"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="แสดงสัตว์น่ารักในหน้า feed"
+                            android:textSize="16sp"/>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchAnimatedAnimals"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="สัตว์น่ารักจะปรากฏในหน้า feed เพื่อเพิ่มความสนุก"
+                        android:textSize="12sp"
+                        android:textColor="#666666"
+                        android:layout_marginStart="36dp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ปุ่มบันทึก/ออกจากระบบ -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonSaveChanges"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="บันทึกการเปลี่ยนแปลง"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="12dp"
+                app:cornerRadius="24dp"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonLogout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="ออกจากระบบ"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
-
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:cornerRadius="24dp"/>
         </LinearLayout>
-
     </ScrollView>
-
 </LinearLayout>

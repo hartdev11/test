@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/colorPrimary"
-            android:title="SethPOS"
+            android:title="MySethPOS"
             android:titleTextColor="@color/colorOnPrimary"
             android:elevation="4dp"
             android:contentDescription="แถบเครื่องมือหลัก">

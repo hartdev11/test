@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="200dp"
+    android:viewportWidth="400"
+    android:viewportHeight="200">
+    
+    <!-- พื้นหลังหลัก - สีฟ้าสดใส -->
+    <path
+        android:fillColor="#00BFFF"
+        android:pathData="M0,0 L400,0 L400,200 L0,200 Z"/>
+    
+    <!-- ท้องฟ้า gradient - สีชมพูสดใส -->
+    <path
+        android:fillColor="#FF69B4"
+        android:pathData="M0,0 L400,0 L400,100 L0,100 Z"/>
+    
+    <!-- ดวงอาทิตย์ใหญ่และสดใส -->
+    <path
+        android:fillColor="#FFFF00"
+        android:pathData="M50,30 A20,20 0 1,1 90,30 A20,20 0 1,1 50,30"/>
+    
+    <!-- เมฆใหญ่และชัดเจน -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M200,40 A15,15 0 1,1 230,40 A15,15 0 1,1 200,40 M215,30 A12,12 0 1,1 245,30 A12,12 0 1,1 215,30"/>
+    
+    <!-- วงกลมสีแดงใหญ่ -->
+    <path
+        android:fillColor="#FF0000"
+        android:pathData="M100,120 A25,25 0 1,1 150,120 A25,25 0 1,1 100,120"/>
+    
+    <!-- สี่เหลี่ยมสีเขียวใหญ่ -->
+    <path
+        android:fillColor="#00FF00"
+        android:pathData="M250,100 L300,100 L300,150 L250,150 Z"/>
+    
+    <!-- สามเหลี่ยมสีม่วงใหญ่ -->
+    <path
+        android:fillColor="#800080"
+        android:pathData="M320,80 L370,60 L370,120 Z"/>
+    
+</vector> 

@@ -101,13 +101,35 @@
             android:layout_marginTop="4dp"
             android:padding="8dp"/>
 
-        <!-- Google Sign-In Button -->
-        <com.google.android.gms.common.SignInButton
+        <!-- Google Sign-In Button (Center Icon + Text, White) -->
+        <LinearLayout
             android:id="@+id/googleSignInButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="16dp" />
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="@drawable/btn_google_signin_bg"
+            android:layout_marginBottom="16dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <ImageView
+                android:id="@+id/googleIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_google_logo"
+                android:contentDescription="Google logo"/>
+
+            <TextView
+                android:id="@+id/googleSignInText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sign in with Google"
+                android:textColor="#202124"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginStart="12dp"/>
+        </LinearLayout>
 
         <ProgressBar
             android:id="@+id/progressBar"

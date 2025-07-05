@@ -13,6 +13,7 @@ import com.natthasethstudio.sethpos.R
 import com.natthasethstudio.sethpos.util.PremiumChecker
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -26,7 +27,7 @@ class SubscriptionActivity : AppCompatActivity() {
     private lateinit var yearlyPlanCard: View
 
     // ใช้ product ID ที่แตกต่างจากฝั่งลูกค้า
-    private val monthlyProductId = "premium_monthly"
+    private val monthlyProductId = "store_monthly"
     private val yearlyProductId = "store_yearly"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +52,9 @@ class SubscriptionActivity : AppCompatActivity() {
             // Initialize billing client
             billingClient = BillingClient.newBuilder(this@SubscriptionActivity)
                 .setListener(purchasesUpdatedListener)
-                .enablePendingPurchases()
+                .enablePendingPurchases(
+                    PendingPurchasesParams.newBuilder().build()
+                )
                 .build()
 
             // Connect to billing service
@@ -68,15 +71,17 @@ class SubscriptionActivity : AppCompatActivity() {
         }
     }
 
-    private val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
+    private val purchasesUpdatedListener = object : PurchasesUpdatedListener {
+        override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
             for (purchase in purchases) {
                 handlePurchase(purchase)
             }
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
-            Toast.makeText(this, "การสมัครสมาชิกถูกยกเลิก", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SubscriptionActivity, "การสมัครสมาชิกถูกยกเลิก", Toast.LENGTH_SHORT).show()
         } else {
             showError("ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง")
+            }
         }
     }
 
@@ -114,9 +119,11 @@ class SubscriptionActivity : AppCompatActivity() {
             )
             .build()
 
-        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+        billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
+            override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                if (productDetailsList.isNotEmpty()) {
+                    val productDetailsList = result.productDetailsList
+                    if (!productDetailsList.isNullOrEmpty()) {
                     updateProductDetails(productDetailsList)
                 } else {
                     showError("ไม่พบแพ็คเกจที่ต้องการ")
@@ -125,6 +132,7 @@ class SubscriptionActivity : AppCompatActivity() {
                 showError("ไม่สามารถดึงข้อมูลแพ็คเกจได้")
             }
         }
+        })
     }
 
     private fun updateProductDetails(productDetailsList: List<ProductDetails>) {
@@ -153,12 +161,14 @@ class SubscriptionActivity : AppCompatActivity() {
             )
             .build()
 
-        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+        billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
+            override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                if (productDetailsList.isNotEmpty()) {
+                    val productDetailsList = result.productDetailsList
+                    if (!productDetailsList.isNullOrEmpty()) {
                     val productDetails = productDetailsList[0]
-                    val offerToken = productDetails.subscriptionOfferDetails?.get(0)?.offerToken
-                    if (offerToken != null) {
+                        val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
+                        if (!offerToken.isNullOrEmpty()) {
                         val billingFlowParams = BillingFlowParams.newBuilder()
                             .setProductDetailsParamsList(
                                 listOf(
@@ -169,8 +179,7 @@ class SubscriptionActivity : AppCompatActivity() {
                                 )
                             )
                             .build()
-
-                        billingClient.launchBillingFlow(this, billingFlowParams)
+                            billingClient.launchBillingFlow(this@SubscriptionActivity, billingFlowParams)
                     } else {
                         showError("ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง")
                     }
@@ -182,6 +191,7 @@ class SubscriptionActivity : AppCompatActivity() {
             }
             showLoading(false)
         }
+        })
     }
 
     private fun handlePurchase(purchase: Purchase) {
@@ -190,11 +200,13 @@ class SubscriptionActivity : AppCompatActivity() {
                 val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
                     .setPurchaseToken(purchase.purchaseToken)
                     .build()
-                billingClient.acknowledgePurchase(acknowledgePurchaseParams) { billingResult ->
+                billingClient.acknowledgePurchase(acknowledgePurchaseParams, object : AcknowledgePurchaseResponseListener {
+                    override fun onAcknowledgePurchaseResponse(billingResult: BillingResult) {
                     if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                         updatePremiumStatus(purchase)
                     }
                 }
+                })
             } else {
                 updatePremiumStatus(purchase)
             }
@@ -216,13 +228,17 @@ class SubscriptionActivity : AppCompatActivity() {
 
         db.collection("premium_stores").document(userId)
             .set(premiumData)
-            .addOnSuccessListener {
+            .addOnSuccessListener(object : com.google.android.gms.tasks.OnSuccessListener<Void> {
+                override fun onSuccess(aVoid: Void?) {
                 showPremiumStatus()
-                Toast.makeText(this, "สมัครสมาชิกพรีเมียมสำเร็จ!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SubscriptionActivity, "สมัครสมาชิกพรีเมียมสำเร็จ!", Toast.LENGTH_SHORT).show()
             }
-            .addOnFailureListener {
+            })
+            .addOnFailureListener(object : com.google.android.gms.tasks.OnFailureListener {
+                override fun onFailure(e: Exception) {
                 showError("ไม่สามารถอัปเดตสถานะสมาชิกได้")
             }
+            })
     }
 
     private fun checkSubscriptionStatus() {

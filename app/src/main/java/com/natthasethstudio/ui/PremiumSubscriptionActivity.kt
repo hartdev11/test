@@ -15,6 +15,7 @@ import com.natthasethstudio.sethpos.SubscriptionActivity
 import com.natthasethstudio.sethpos.util.PremiumChecker
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -27,8 +28,8 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
     private lateinit var monthlyPlanCard: View
     private lateinit var yearlyPlanCard: View
 
-    private val monthlyProductId = "premium_monthly"
-    private val yearlyProductId = "premium_yearly"
+    private val monthlyProductId = "customer_monthly"
+    private val yearlyProductId = "customer_yearly"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,18 +40,19 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
         if (currentUser != null) {
             FirebaseFirestore.getInstance().collection("users").document(currentUser.uid)
                 .get()
-                .addOnSuccessListener { document ->
+                .addOnSuccessListener(object : com.google.android.gms.tasks.OnSuccessListener<DocumentSnapshot> {
+                    override fun onSuccess(document: DocumentSnapshot) {
                     if (document.exists()) {
                         val role = document.getString("role") ?: "customer"
                         if (role == "merchant") {
                             // ถ้าเป็นร้านค้า ให้ redirect ไปที่หน้าสมัครสมาชิกของร้านค้า
-                            val intent = Intent(this, SubscriptionActivity::class.java)
+                                val intent = Intent(this@PremiumSubscriptionActivity, SubscriptionActivity::class.java)
                             startActivity(intent)
                             finish()
-                            return@addOnSuccessListener
+                            }
                         }
                     }
-                }
+                })
         }
 
         // Initialize views
@@ -71,7 +73,9 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
             // Initialize billing client
             billingClient = BillingClient.newBuilder(this@PremiumSubscriptionActivity)
                 .setListener(purchasesUpdatedListener)
-                .enablePendingPurchases()
+                .enablePendingPurchases(
+                    PendingPurchasesParams.newBuilder().build()
+                )
                 .build()
 
             // Connect to billing service
@@ -88,17 +92,17 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
         }
     }
 
-    private val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
+    private val purchasesUpdatedListener = object : PurchasesUpdatedListener {
+        override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
             for (purchase in purchases) {
                 handlePurchase(purchase)
             }
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
-            // Handle user cancellation
-            Toast.makeText(this, "การสมัครสมาชิกถูกยกเลิก", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@PremiumSubscriptionActivity, "การสมัครสมาชิกถูกยกเลิก", Toast.LENGTH_SHORT).show()
         } else {
-            // Handle error
             showError("ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง")
+            }
         }
     }
 
@@ -139,10 +143,11 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
             )
             .build()
 
-        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+        billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
+            override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                if (productDetailsList.isNotEmpty()) {
-                    // Update UI with product details
+                    val productDetailsList = result.productDetailsList
+                    if (!productDetailsList.isNullOrEmpty()) {
                     updateProductDetails(productDetailsList)
                 } else {
                     showError("ไม่พบแพ็คเกจที่ต้องการ")
@@ -151,6 +156,7 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
                 showError("ไม่สามารถดึงข้อมูลแพ็คเกจได้")
             }
         }
+        })
     }
 
     private fun updateProductDetails(productDetailsList: List<ProductDetails>) {
@@ -180,12 +186,14 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
             )
             .build()
 
-        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+        billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
+            override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                if (productDetailsList.isNotEmpty()) {
+                    val productDetailsList = result.productDetailsList
+                    if (!productDetailsList.isNullOrEmpty()) {
                     val productDetails = productDetailsList[0]
-                    val offerToken = productDetails.subscriptionOfferDetails?.get(0)?.offerToken
-                    if (offerToken != null) {
+                        val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
+                        if (!offerToken.isNullOrEmpty()) {
                         val billingFlowParams = BillingFlowParams.newBuilder()
                             .setProductDetailsParamsList(
                                 listOf(
@@ -196,8 +204,7 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
                                 )
                             )
                             .build()
-
-                        billingClient.launchBillingFlow(this, billingFlowParams)
+                            billingClient.launchBillingFlow(this@PremiumSubscriptionActivity, billingFlowParams)
                     } else {
                         showError("ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง")
                     }
@@ -209,6 +216,7 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
             }
             showLoading(false)
         }
+        })
     }
 
     private fun handlePurchase(purchase: Purchase) {
@@ -217,11 +225,13 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
                 val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
                     .setPurchaseToken(purchase.purchaseToken)
                     .build()
-                billingClient.acknowledgePurchase(acknowledgePurchaseParams) { billingResult ->
+                billingClient.acknowledgePurchase(acknowledgePurchaseParams, object : AcknowledgePurchaseResponseListener {
+                    override fun onAcknowledgePurchaseResponse(billingResult: BillingResult) {
                     if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                         updatePremiumStatus(purchase)
                     }
                 }
+                })
             } else {
                 updatePremiumStatus(purchase)
             }
@@ -299,9 +309,11 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
                 showPremiumStatus()
                 Toast.makeText(this, "สมัครสมาชิกพรีเมียมสำเร็จ!", Toast.LENGTH_SHORT).show()
             }
-            .addOnFailureListener {
+            .addOnFailureListener(object : com.google.android.gms.tasks.OnFailureListener {
+                override fun onFailure(e: Exception) {
                 showError("ไม่สามารถอัปเดตสถานะสมาชิกได้")
             }
+            })
     }
 
     private fun showPremiumStatus() {

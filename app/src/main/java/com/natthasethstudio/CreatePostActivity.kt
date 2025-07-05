@@ -287,10 +287,11 @@ class CreatePostActivity : AppCompatActivity() {
                     this.post = document.toObject(Post::class.java)
                     post?.let {
                         editTextPostBody.setText(it.postText)
-                        if (!it.postImageUrl.isNullOrEmpty()) {
-                            Glide.with(this).load(it.postImageUrl).into(imageViewPreview)
+                        val imageUrl = it.postImageUrl
+                        if (!imageUrl.isNullOrEmpty()) {
+                            Glide.with(this).load(imageUrl).into(imageViewPreview)
                             imageViewPreview.visibility = View.VISIBLE
-                            imageUri = it.postImageUrl.toUri()
+                            imageUri = imageUrl.toUri()
                         }
                     }
                 } else {
@@ -622,7 +623,8 @@ class CreatePostActivity : AppCompatActivity() {
             postUpdate["province"] = currentProvince!!
         }
 
-        if (imageUri != null && imageUri.toString() != post?.postImageUrl) {
+                                val currentImageUrl = post?.postImageUrl
+                        if (imageUri != null && imageUri.toString() != currentImageUrl) {
             uploadImageAndUpdatePost(postId, imageUri, postUpdate)
         } else {
             firestore.collection("posts").document(postId)

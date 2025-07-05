@@ -4,7 +4,7 @@
     
     <item
         android:id="@+id/action_subscription"
-        android:icon="@drawable/ic_premium_crown"
+        android:icon="@drawable/diamondpremium"
         android:title="สมัครสมาชิกพรีเมียม"
         app:showAsAction="never" />
         

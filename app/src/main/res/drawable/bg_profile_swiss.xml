@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="400dp"
+            android:height="200dp"
+            android:viewportWidth="400"
+            android:viewportHeight="200">
+            
+            <!-- พื้นหลังหลัก - สีเขียวอ่อน -->
+            <path
+                android:fillColor="#E6FFE6"
+                android:pathData="M0,0 L400,0 L400,200 L0,200 Z"/>
+            
+            <!-- ท้องฟ้า gradient -->
+            <path
+                android:fillColor="#E6F3FF"
+                android:pathData="M0,0 L400,0 L400,80 L0,80 Z"/>
+            
+            <!-- ภูเขา -->
+            <path
+                android:fillColor="#FFFFFF"
+                android:pathData="M0,200 L0,100 L100,60 L200,100 L300,80 L400,120 L400,200 Z"/>
+            
+            <!-- ภูเขาที่ 2 -->
+            <path
+                android:fillColor="#F0F0F0"
+                android:pathData="M50,200 L50,120 L150,80 L250,120 L350,100 L400,140 L400,200 Z"/>
+            
+            <!-- ดวงอาทิตย์เคลื่อนไหวเร็ว -->
+            <path
+                android:name="sun"
+                android:fillColor="#FFD700"
+                android:pathData="M320,30 A12,12 0 1,1 344,30 A12,12 0 1,1 320,30"/>
+            
+            <!-- เมฆเคลื่อนไหว -->
+            <path
+                android:name="cloud1"
+                android:fillColor="#FFFFFF"
+                android:pathData="M80,20 A8,8 0 1,1 96,20 A8,8 0 1,1 80,20 M88,15 A6,6 0 1,1 100,15 A6,6 0 1,1 88,15"/>
+            
+            <path
+                android:name="cloud2"
+                android:fillColor="#FFFFFF"
+                android:pathData="M200,15 A10,10 0 1,1 220,15 A10,10 0 1,1 200,15 M210,10 A7,7 0 1,1 224,10 A7,7 0 1,1 210,10"/>
+            
+            <!-- หิมะเคลื่อนไหว -->
+            <path
+                android:name="snow1"
+                android:fillColor="#FFFFFF"
+                android:pathData="M120,80 L122,85 L127,85 L123,88 L125,93 L120,90 L115,93 L117,88 L113,85 L118,85 Z"/>
+            
+            <path
+                android:name="snow2"
+                android:fillColor="#FFFFFF"
+                android:pathData="M280,70 L282,75 L287,75 L283,78 L285,83 L280,80 L275,83 L277,78 L273,75 L278,75 Z"/>
+            
+            <!-- ต้นไม้เคลื่อนไหว -->
+            <path
+                android:name="tree1"
+                android:fillColor="#228B22"
+                android:pathData="M60,200 L60,150 L80,130 L100,150 L100,200 Z"/>
+            
+            <path
+                android:name="tree2"
+                android:fillColor="#32CD32"
+                android:pathData="M300,200 L300,160 L320,140 L340,160 L340,200 Z"/>
+            
+        </vector>
+    </aapt:attr>
+    
+    <!-- Animation ดวงอาทิตย์ - หมุนเร็ว -->
+    <target android:name="sun">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="rotation"
+                    android:duration="180"
+                    android:valueFrom="0"
+                    android:valueTo="360"
+                    android:repeatCount="infinite"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation เมฆที่ 1 - เคลื่อนไหวซ้ายขวาเร็ว -->
+    <target android:name="cloud1">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateX"
+                    android:duration="320"
+                    android:valueFrom="0"
+                    android:valueTo="80"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation เมฆที่ 2 - เคลื่อนไหวขึ้นลงเร็ว -->
+    <target android:name="cloud2">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateY"
+                    android:duration="380"
+                    android:valueFrom="0"
+                    android:valueTo="-25"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation หิมะที่ 1 - กระพริบเร็ว -->
+    <target android:name="snow1">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="alpha"
+                    android:duration="150"
+                    android:valueFrom="1.0"
+                    android:valueTo="0.2"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation หิมะที่ 2 - หมุนเร็ว -->
+    <target android:name="snow2">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="rotation"
+                    android:duration="200"
+                    android:valueFrom="0"
+                    android:valueTo="360"
+                    android:repeatCount="infinite"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation ต้นไม้ที่ 1 - เคลื่อนไหวขึ้นลงเร็ว -->
+    <target android:name="tree1">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateY"
+                    android:duration="450"
+                    android:valueFrom="0"
+                    android:valueTo="-15"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Animation ต้นไม้ที่ 2 - เคลื่อนไหวซ้ายขวาเร็ว -->
+    <target android:name="tree2">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:propertyName="translateX"
+                    android:duration="400"
+                    android:valueFrom="0"
+                    android:valueTo="20"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse"/>
+            </set>
+        </aapt:attr>
+    </target>
+    
+</animated-vector> 

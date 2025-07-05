@@ -24,6 +24,7 @@ import com.natthasethstudio.sethpos.SethPOSApplication
 import com.google.firebase.firestore.FieldValue
 import com.natthasethstudio.sethpos.model.Notification
 import com.google.firebase.Timestamp
+import com.natthasethstudio.sethpos.util.ProfileBackgroundManager
 
 
 class ProfileActivity : AppCompatActivity() {
@@ -52,6 +53,7 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
     private lateinit var storage: FirebaseStorage
+    private lateinit var backgroundManager: ProfileBackgroundManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,10 +63,14 @@ class ProfileActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
         storage = FirebaseStorage.getInstance()
+        backgroundManager = ProfileBackgroundManager(this)
 
-        setupToolbar()
         setupViews()
         setupListeners()
+
+        // ซ่อน ScrollView และแสดง ProgressBar ตอนเริ่มโหลด
+        binding.profileProgressBar.visibility = View.VISIBLE
+        binding.root.findViewById<android.widget.ScrollView>(R.id.scrollViewProfile)?.visibility = View.INVISIBLE
 
         val userId = intent.getStringExtra("userId")
         if (userId != null) {
@@ -75,14 +81,6 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         setupBackPressCallback()
-    }
-
-    private fun setupToolbar() {
-        setSupportActionBar(binding.toolbarProfile)
-        supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-        }
     }
 
     private fun setupViews() {
@@ -123,8 +121,13 @@ class ProfileActivity : AppCompatActivity() {
             openImagePicker()
         }
 
-        binding.buttonFollowToggle.setOnClickListener {
-            toggleFollow()
+        binding.changeBackgroundButton.setOnClickListener {
+            changeBackground()
+        }
+        
+        // Setup animated animals switch
+        binding.switchAnimatedAnimals.setOnCheckedChangeListener { _, isChecked ->
+            com.natthasethstudio.sethpos.util.SettingsManager.setAnimatedAnimalsEnabled(this, isChecked)
         }
     }
 
@@ -140,21 +143,27 @@ class ProfileActivity : AppCompatActivity() {
         val currentUserId = auth.currentUser?.uid
 
         if (userId == currentUserId) {
-            binding.buttonFollowToggle.visibility = View.GONE
             binding.buttonSaveChanges.visibility = View.VISIBLE
             binding.changeProfileImageButton.visibility = View.VISIBLE
+            binding.changeBackgroundButton.visibility = View.VISIBLE
             binding.textInputLayoutPassword.visibility = View.VISIBLE
             binding.textInputLayoutNickname.visibility = View.VISIBLE
             binding.avatarContainer.visibility = View.VISIBLE
         } else {
             binding.buttonSaveChanges.visibility = View.GONE
             binding.changeProfileImageButton.visibility = View.GONE
+            binding.changeBackgroundButton.visibility = View.GONE
             binding.textInputLayoutPassword.visibility = View.GONE
             binding.textInputLayoutNickname.visibility = View.GONE
             binding.avatarContainer.visibility = View.GONE
-            binding.buttonFollowToggle.visibility = View.VISIBLE
-            checkFollowStatus(userId, currentUserId)
         }
+
+        // โหลดพื้นหลังสำหรับผู้ใช้
+        loadBackgroundForUser(userId)
+
+        // แสดง ProgressBar และซ่อน ScrollView
+        binding.profileProgressBar.visibility = View.VISIBLE
+        binding.root.findViewById<android.widget.ScrollView>(R.id.scrollViewProfile)?.visibility = View.INVISIBLE
 
         firestore.collection("users").document(userId)
             .get()
@@ -162,124 +171,73 @@ class ProfileActivity : AppCompatActivity() {
                 if (document.exists()) {
                     document.data?.let { data ->
                         binding.apply {
-                            textViewProfileName.text = data["name"] as? String ?: "ไม่พบชื่อ"
+                            val name = data["name"] as? String
+                            val nickname = data["nickname"] as? String
+                            val email = data["email"] as? String
+                            textViewProfileName.text =
+                                when {
+                                    !name.isNullOrBlank() -> name
+                                    !nickname.isNullOrBlank() -> nickname
+                                    !email.isNullOrBlank() -> email
+                                    else -> "ผู้ใช้ใหม่"
+                                }
                             textViewProfileEmail.text = data["email"] as? String ?: "ไม่พบอีเมล"
                             editTextProfilePassword.setText(data["password"] as? String ?: "ไม่พบรหัสผ่าน")
                             editTextProfileNickname.setText(data["nickname"] as? String ?: "")
                             
-                            val avatarId = (data["avatarId"] as? Number)?.toInt() ?: 0
-                            currentAvatarImage.setImageResource(avatarResources[avatarId])
-                            selectedAvatarId = avatarId
-                            currentProfileImageUrl = data["profileImageUrl"] as? String
-
-                            updateAvatarSelectionUI(avatarId)
+                            // ตรวจสอบว่าเป็น Google user หรือไม่
+                            val isGoogleUser = data["isGoogleUser"] as? Boolean ?: false
+                            val profileImageUrl = data["profileImageUrl"] as? String
+                            
+                            // ตรวจสอบ Google user จากหลายวิธี (รองรับข้อมูลเก่า)
+                            val isGoogleUserFromUrl = !profileImageUrl.isNullOrEmpty() && 
+                                                     profileImageUrl.contains("googleusercontent.com")
+                            val isGoogleUserFromProvider = auth.currentUser?.providerData?.any { 
+                                it.providerId == "google.com" 
+                            } ?: false
+                            
+                            val isActuallyGoogleUser = isGoogleUser || isGoogleUserFromUrl || isGoogleUserFromProvider
+                            
+                            if (isActuallyGoogleUser && !profileImageUrl.isNullOrEmpty()) {
+                                // ใช้รูป Gmail
+                                Glide.with(this@ProfileActivity)
+                                    .load(profileImageUrl)
+                                    .placeholder(R.drawable.ic_profile)
+                                    .error(R.drawable.ic_profile)
+                                    .circleCrop()
+                                    .into(currentAvatarImage)
+                                
+                                // ซ่อน avatar selection สำหรับ Google user
+                                avatarContainer.visibility = View.GONE
+                            } else {
+                                // ใช้ avatar ปกติ
+                                val avatarId = (data["avatarId"] as? Number)?.toInt() ?: 0
+                                currentAvatarImage.setImageResource(avatarResources[avatarId])
+                                selectedAvatarId = avatarId
+                                updateAvatarSelectionUI(avatarId)
+                            }
+                            
+                            currentProfileImageUrl = profileImageUrl
+                            
+                            // Load settings
+                            if (userId == currentUserId) {
+                                binding.switchAnimatedAnimals.isChecked = 
+                                    com.natthasethstudio.sethpos.util.SettingsManager.isAnimatedAnimalsEnabled(this@ProfileActivity)
+                            }
                         }
                     }
                 } else {
                     showProfileNotFound()
                 }
+                // โหลดเสร็จ: ซ่อน ProgressBar และแสดง ScrollView
+                binding.profileProgressBar.visibility = View.GONE
+                binding.root.findViewById<android.widget.ScrollView>(R.id.scrollViewProfile)?.visibility = View.VISIBLE
             }
             .addOnFailureListener { e ->
                 showError("เกิดข้อผิดพลาดในการโหลดข้อมูลโปรไฟล์: ${e.message}")
-            }
-    }
-
-    private fun checkFollowStatus(targetUserId: String, currentUserId: String?) {
-        if (currentUserId == null) return
-
-        firestore.collection("users").document(currentUserId)
-            .collection("following").document(targetUserId)
-            .get()
-            .addOnSuccessListener { document ->
-                isFollowing = document.exists()
-                updateFollowButtonUI()
-            }
-            .addOnFailureListener { e ->
-                Log.e("ProfileActivity", "Error checking follow status: ${e.message}")
-                Toast.makeText(this, "เกิดข้อผิดพลาดในการตรวจสอบสถานะการติดตาม", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun updateFollowButtonUI() {
-        if (isFollowing) {
-            binding.buttonFollowToggle.text = "เลิกติดตาม"
-            binding.buttonFollowToggle.setBackgroundColor(ContextCompat.getColor(this, R.color.gray))
-        } else {
-            binding.buttonFollowToggle.text = "ติดตาม"
-            binding.buttonFollowToggle.setBackgroundColor(ContextCompat.getColor(this, R.color.colorPrimary))
-        }
-    }
-
-    private fun toggleFollow() {
-        val currentUserId = auth.currentUser?.uid ?: return
-        val targetId = targetUserId ?: return
-
-        if (isFollowing) {
-            firestore.collection("users").document(currentUserId).collection("following").document(targetId).delete()
-            firestore.collection("users").document(targetId).update("followers", FieldValue.arrayRemove(currentUserId))
-                .addOnSuccessListener {
-                    isFollowing = false
-                    updateFollowButtonUI()
-                    Toast.makeText(this, "เลิกติดตามแล้ว", Toast.LENGTH_SHORT).show()
-                }
-                .addOnFailureListener { e ->
-                    Log.e("ProfileActivity", "Error unfollowing: ${e.message}")
-                    Toast.makeText(this, "เกิดข้อผิดพลาดในการเลิกติดตาม", Toast.LENGTH_SHORT).show()
-                }
-        } else {
-            firestore.collection("users").document(currentUserId).collection("following").document(targetId).set(mapOf("timestamp" to Timestamp.now()))
-            firestore.collection("users").document(targetId).update("followers", FieldValue.arrayUnion(currentUserId))
-                .addOnSuccessListener {
-                    isFollowing = true
-                    updateFollowButtonUI()
-                    Toast.makeText(this, "ติดตามแล้ว", Toast.LENGTH_SHORT).show()
-                    sendNotification(targetId, "follow")
-                }
-                .addOnFailureListener { e ->
-                    Log.e("ProfileActivity", "Error following: ${e.message}")
-                    Toast.makeText(this, "เกิดข้อผิดพลาดในการติดตาม", Toast.LENGTH_SHORT).show()
-                }
-        }
-    }
-
-    private fun sendNotification(recipientId: String?, type: String) {
-        if (recipientId == null || auth.currentUser?.uid == null || auth.currentUser?.uid == recipientId) {
-            return
-        }
-
-        firestore.collection("users").document(auth.currentUser!!.uid)
-            .get()
-            .addOnSuccessListener { senderDoc ->
-                val senderName = senderDoc.getString("nickname") ?: senderDoc.getString("name") ?: "ไม่พบชื่อ"
-                val senderAvatarId = senderDoc.getLong("avatarId")?.toInt() ?: 0
-
-                val notificationMessage = when (type) {
-                    "follow" -> "$senderName ได้ติดตามคุณ"
-                    else -> "มีการแจ้งเตือนใหม่"
-                }
-
-                val notification = Notification(
-                    recipientId = recipientId,
-                    senderId = auth.currentUser!!.uid,
-                    senderName = senderName,
-                    senderAvatarId = senderAvatarId,
-                    type = type,
-                    message = notificationMessage,
-                    timestamp = Timestamp.now(),
-                    read = false
-                )
-
-                firestore.collection("notifications")
-                    .add(notification)
-                    .addOnSuccessListener { documentReference ->
-                        Log.d("ProfileActivity", "Notification sent successfully: ${documentReference.id}")
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("ProfileActivity", "Error sending notification: $e")
-                    }
-            }
-            .addOnFailureListener { e ->
-                Log.e("ProfileActivity", "Error fetching sender details for notification: $e")
+                // โหลดเสร็จ: ซ่อน ProgressBar และแสดง ScrollView
+                binding.profileProgressBar.visibility = View.GONE
+                binding.root.findViewById<android.widget.ScrollView>(R.id.scrollViewProfile)?.visibility = View.VISIBLE
             }
     }
 
@@ -389,5 +347,77 @@ class ProfileActivity : AppCompatActivity() {
             .addOnFailureListener { e ->
                 Toast.makeText(this, "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    /**
+     * โหลดพื้นหลังสำหรับผู้ใช้
+     */
+    private fun loadBackgroundForUser(userId: String) {
+        val backgroundDrawable = backgroundManager.getBackgroundForUser(userId)
+        binding.profileBackgroundImage.setImageDrawable(backgroundDrawable)
+        
+        // เริ่ม animation ทันที
+        if (backgroundDrawable != null) {
+            Log.d("ProfileActivity", "เริ่ม animation สำหรับพื้นหลัง")
+            backgroundManager.startBackgroundAnimation(backgroundDrawable)
+        }
+        
+        // แสดงชื่อสถานที่
+        val locationName = backgroundManager.getLocationNameFromDrawable(backgroundDrawable)
+        binding.locationNameText.text = "📍 $locationName"
+        Log.d("ProfileActivity", "โหลดพื้นหลัง: $locationName")
+    }
+
+    /**
+     * เปลี่ยนพื้นหลังใหม่
+     */
+    private fun changeBackground() {
+        val currentUser = auth.currentUser ?: return
+        Log.d("ProfileActivity", "เปลี่ยนพื้นหลัง - User ID: ${currentUser.uid}")
+        
+        val newBackgroundDrawable = backgroundManager.changeBackground(currentUser.uid)
+        Log.d("ProfileActivity", "ได้พื้นหลังใหม่: ${newBackgroundDrawable != null}")
+        
+        if (newBackgroundDrawable != null) {
+            binding.profileBackgroundImage.setImageDrawable(newBackgroundDrawable)
+            
+            // เริ่ม animation ทันที
+            Log.d("ProfileActivity", "เริ่ม animation สำหรับพื้นหลังใหม่")
+            backgroundManager.startBackgroundAnimation(newBackgroundDrawable)
+            
+            // แสดงชื่อสถานที่ใหม่
+            val locationName = backgroundManager.getLocationNameFromDrawable(newBackgroundDrawable)
+            binding.locationNameText.text = "📍 $locationName"
+            Log.d("ProfileActivity", "ชื่อสถานที่ใหม่: $locationName")
+            
+            Toast.makeText(this, "เปลี่ยนพื้นหลังเป็น: $locationName", Toast.LENGTH_SHORT).show()
+        } else {
+            Log.e("ProfileActivity", "ไม่สามารถโหลดพื้นหลังใหม่ได้")
+            Toast.makeText(this, "เกิดข้อผิดพลาดในการเปลี่ยนพื้นหลัง", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // เริ่ม animation อีกครั้งเมื่อกลับมาที่หน้า
+        targetUserId?.let { userId ->
+            Log.d("ProfileActivity", "onResume - เริ่ม animation สำหรับ user: $userId")
+            val backgroundDrawable = backgroundManager.getBackgroundForUser(userId)
+            Log.d("ProfileActivity", "onResume - ได้ background drawable: ${backgroundDrawable != null}")
+            if (backgroundDrawable != null) {
+                backgroundManager.startBackgroundAnimation(backgroundDrawable)
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // หยุด animation เมื่อออกจากหน้า
+        targetUserId?.let { userId ->
+            val backgroundDrawable = backgroundManager.getBackgroundForUser(userId)
+            if (backgroundDrawable != null) {
+                backgroundManager.stopBackgroundAnimation(backgroundDrawable)
+            }
+        }
     }
 }

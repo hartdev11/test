@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +21,7 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
+import android.graphics.drawable.AnimatedVectorDrawable
 
 class StoreProfileActivity : AppCompatActivity() {
     private lateinit var storeImage: ImageView
@@ -31,10 +33,15 @@ class StoreProfileActivity : AppCompatActivity() {
     private lateinit var dashboardButton: MaterialButton
     private lateinit var saveChangesButton: MaterialButton
     private lateinit var feedButton: MaterialButton
+    private lateinit var storeNameText: TextView
+    private lateinit var storeEmailText: TextView
+    private lateinit var animatedWaveBackground: ImageView
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private val storage = FirebaseStorage.getInstance()
+    
+    private var storeId: String? = null
 
     private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -55,6 +62,13 @@ class StoreProfileActivity : AppCompatActivity() {
         
         setContentView(R.layout.activity_store_profile)
 
+        // รับ storeId จาก intent
+        storeId = intent.getStringExtra("storeId")
+        if (storeId == null) {
+            // ถ้าไม่มี storeId ให้ใช้ currentUser.uid เป็นค่าเริ่มต้น
+            storeId = auth.currentUser?.uid
+        }
+
         initializeViews()
         setupClickListeners()
         loadStoreData()
@@ -72,6 +86,12 @@ class StoreProfileActivity : AppCompatActivity() {
         dashboardButton = findViewById(R.id.dashboardButton)
         saveChangesButton = findViewById(R.id.saveChangesButton)
         feedButton = findViewById(R.id.feedButton)
+        storeNameText = findViewById(R.id.storeNameText)
+        storeEmailText = findViewById(R.id.storeEmailText)
+        animatedWaveBackground = findViewById(R.id.animatedWaveBackground)
+        
+        // Start animated wave background
+        startWaveAnimation()
     }
 
     private fun setupClickListeners() {
@@ -102,6 +122,11 @@ class StoreProfileActivity : AppCompatActivity() {
         saveChangesButton.setOnClickListener {
             saveChanges()
         }
+        
+        // Setup animated animals switch
+        findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switchAnimatedAnimals)?.setOnCheckedChangeListener { _, isChecked ->
+            com.natthasethstudio.sethpos.util.SettingsManager.setAnimatedAnimalsEnabled(this, isChecked)
+        }
     }
 
     private fun loadStoreData() {
@@ -109,26 +134,34 @@ class StoreProfileActivity : AppCompatActivity() {
         if (currentUser != null) {
             // Set email from Firebase Auth
             emailInput.setText(currentUser.email)
+            storeEmailText.text = currentUser.email
 
             // Display placeholder for password (not the actual password)
             passwordInput.setText("********")
 
+            // ใช้ storeId แทน currentUser.uid
+            val targetStoreId = storeId ?: currentUser.uid
+            
             // Load store data from Firestore
-            db.collection("stores").document(currentUser.uid)
+            db.collection("stores").document(targetStoreId)
                 .get()
                 .addOnSuccessListener { document ->
                     if (document != null && document.exists()) {
+                        // Load store name
+                        val storeName = document.getString("storeName")
+                        storeNameText.text = storeName ?: "ชื่อร้านค้า"
+                        
                         // Load store image URL from Firestore
                         val storeImageUrl = document.getString("storeImage")
                         if (!storeImageUrl.isNullOrEmpty()) {
                             loadImageWithGlide(storeImageUrl)
                         } else {
                             // If no image URL in Firestore, try loading from Storage
-                            val storeRef = storage.reference.child("store_images/${currentUser.uid}")
+                            val storeRef = storage.reference.child("store_images/${targetStoreId}")
                             storeRef.downloadUrl
                                 .addOnSuccessListener { uri ->
                                     // Save the URL to Firestore for future use
-                                    db.collection("stores").document(currentUser.uid)
+                                    db.collection("stores").document(targetStoreId)
                                         .update("storeImage", uri.toString())
                                         .addOnSuccessListener {
                                             loadImageWithGlide(uri.toString())
@@ -143,11 +176,13 @@ class StoreProfileActivity : AppCompatActivity() {
                         }
                     } else {
                         handleImageLoadError()
+                        storeNameText.text = "ชื่อร้านค้า"
                     }
                 }
                 .addOnFailureListener { e ->
                     Log.e("StoreProfileActivity", "Error loading store data", e)
                     handleImageLoadError()
+                    storeNameText.text = "ชื่อร้านค้า"
                 }
         } else {
             // User is not logged in, handle accordingly
@@ -366,5 +401,12 @@ class StoreProfileActivity : AppCompatActivity() {
             .addOnFailureListener { e ->
                 Log.e("StoreProfileActivity", "Error getting stores collection", e)
             }
+    }
+
+    private fun startWaveAnimation() {
+        val drawable = animatedWaveBackground.drawable
+        if (drawable is AnimatedVectorDrawable) {
+            drawable.start()
+        }
     }
 } 

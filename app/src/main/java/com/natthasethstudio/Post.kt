@@ -9,11 +9,11 @@ import com.google.firebase.firestore.PropertyName
 data class Post(
     @get:JvmName("getUserId")
     val userId: String? = null,
-    val displayName: String? = null,
+    var displayName: String? = null,
     val profileImageUrl: String? = null,
-    val postTime: String? = null,
-    val postImageUrl: String? = null,
-    val postText: String? = null,
+    var postTime: String? = null,
+    var postImageUrl: String? = null,
+    var postText: String? = null,
     var storyImageUrl: String? = null, // เพิ่ม Field สำหรับ URL ของ Story Preview
     var hasMoment: Boolean = false, // เพิ่ม Field สำหรับระบุว่าโพสต์นี้มี "Join Moment" หรือไม่
     var joinMomentUserAvatars: List<String> = emptyList(), // เพิ่มรายชื่อ URL รูปโปรไฟล์ของผู้ที่เข้าร่วม Moment

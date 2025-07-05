@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="32dp"
+            android:height="24dp"
+            android:viewportWidth="32"
+            android:viewportHeight="24">
+            
+            <!-- Dog body -->
+            <path
+                android:name="dogBody"
+                android:fillColor="#8D6E63"
+                android:pathData="M8,16 L24,16 L24,20 L8,20 Z" />
+            
+            <!-- Dog head -->
+            <path
+                android:name="dogHead"
+                android:fillColor="#8D6E63"
+                android:pathData="M6,12 L18,12 L18,16 L6,16 Z" />
+            
+            <!-- Dog ears -->
+            <path
+                android:name="dogEars"
+                android:fillColor="#6D4C41"
+                android:pathData="M8,10 L10,8 L12,10 L10,12 Z M16,10 L18,8 L20,10 L18,12 Z" />
+            
+            <!-- Dog tail -->
+            <path
+                android:name="dogTail"
+                android:fillColor="#8D6E63"
+                android:pathData="M24,18 L28,16 L28,20 L24,18 Z" />
+            
+            <!-- Dog eyes -->
+            <path
+                android:name="dogEyes"
+                android:fillColor="#000000"
+                android:pathData="M9,13 L10,13 L10,14 L9,14 Z M15,13 L16,13 L16,14 L15,14 Z" />
+            
+            <!-- Dog nose -->
+            <path
+                android:name="dogNose"
+                android:fillColor="#000000"
+                android:pathData="M12,14 L13,14 L13,15 L12,15 Z" />
+            
+            <!-- Dog tongue -->
+            <path
+                android:name="dogTongue"
+                android:fillColor="#FF5722"
+                android:pathData="M12,15 L13,15 L13,16 L12,16 Z" />
+        </vector>
+    </aapt:attr>
+    
+    <!-- Dog running animation -->
+    <target android:name="dogBody">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="400"
+                    android:propertyName="pathData"
+                    android:valueFrom="M8,16 L24,16 L24,20 L8,20 Z"
+                    android:valueTo="M8,15 L24,15 L24,19 L8,19 Z"
+                    android:valueType="pathType"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse" />
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Dog tail wagging -->
+    <target android:name="dogTail">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="200"
+                    android:propertyName="pathData"
+                    android:valueFrom="M24,18 L28,16 L28,20 L24,18 Z"
+                    android:valueTo="M24,18 L28,12 L28,16 L24,18 Z"
+                    android:valueType="pathType"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse" />
+            </set>
+        </aapt:attr>
+    </target>
+    
+    <!-- Dog tongue animation -->
+    <target android:name="dogTongue">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="1000"
+                    android:propertyName="pathData"
+                    android:valueFrom="M12,15 L13,15 L13,16 L12,16 Z"
+                    android:valueTo="M12,15 L13,15 L13,17 L12,17 Z"
+                    android:valueType="pathType"
+                    android:repeatCount="infinite"
+                    android:repeatMode="reverse" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector> 
