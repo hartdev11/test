@@ -275,4 +275,13 @@
     <string name="paper_width">ความกว้างกระดาษ (มม.)</string>
     <string name="chars_per_line">จำนวนตัวอักษรต่อบรรทัด</string>
     <string name="custom_paper_size">กำหนดเอง</string>
+
+    <string name="change_store_image">เปลี่ยนรูปภาพร้านค้า</string>
+
+    <!-- General UI -->
+    <string name="continue_button_text">ดำเนินการต่อ</string>
+    <string name="loading_text">กำลังโหลด...</string>
+
+    <string name="selected_description">Selected</string>
+
 </resources>

@@ -58,7 +58,7 @@ class NotificationAdapter : ListAdapter<Notification, NotificationAdapter.Notifi
             // Set notification type icon
             val typeIcon = when (notification.type) {
                 "like" -> R.drawable.ic_heart
-                "comment" -> R.drawable.ic_comment
+                "comment" -> R.drawable.comment_dots
                 "follow" -> R.drawable.ic_person_add
                 else -> R.drawable.ic_notifications
             }

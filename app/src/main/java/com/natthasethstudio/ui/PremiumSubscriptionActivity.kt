@@ -187,37 +187,46 @@ class PremiumSubscriptionActivity : AppCompatActivity() {
             .build()
 
         billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
-            override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+            override fun onProductDetailsResponse(
+                billingResult: BillingResult,
+                result: QueryProductDetailsResult
+            ) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     val productDetailsList = result.productDetailsList
                     if (!productDetailsList.isNullOrEmpty()) {
-                    val productDetails = productDetailsList[0]
+                        val productDetails = productDetailsList[0]
                         val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
+
                         if (!offerToken.isNullOrEmpty()) {
-                        val billingFlowParams = BillingFlowParams.newBuilder()
-                            .setProductDetailsParamsList(
-                                listOf(
-                                    BillingFlowParams.ProductDetailsParams.newBuilder()
-                                        .setProductDetails(productDetails)
-                                        .setOfferToken(offerToken)
-                                        .build()
+                            val billingFlowParams = BillingFlowParams.newBuilder()
+                                .setProductDetailsParamsList(
+                                    listOf(
+                                        BillingFlowParams.ProductDetailsParams.newBuilder()
+                                            .setProductDetails(productDetails)
+                                            .setOfferToken(offerToken)
+                                            .build()
+                                    )
                                 )
+                                .build()
+
+                             billingClient.launchBillingFlow(
+                                this@PremiumSubscriptionActivity,
+                                billingFlowParams
                             )
-                            .build()
-                            billingClient.launchBillingFlow(this@PremiumSubscriptionActivity, billingFlowParams)
+                        } else {
+                            showError("ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง")
+                        }
                     } else {
-                        showError("ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง")
+                        showError("ไม่พบแพ็คเกจที่ต้องการ")
                     }
                 } else {
-                    showError("ไม่พบแพ็คเกจที่ต้องการ")
+                    showError("ไม่สามารถดึงข้อมูลแพ็คเกจได้")
                 }
-            } else {
-                showError("ไม่สามารถดึงข้อมูลแพ็คเกจได้")
+                showLoading(false)
             }
-            showLoading(false)
-        }
         })
     }
+
 
     private fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState == 1) { // PURCHASED

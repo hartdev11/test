@@ -80,4 +80,50 @@
     <!-- Chip Colors -->
     <color name="chip_selected">@color/flutter_blue_500</color>
 
+    <!-- Role Selection Colors -->
+    <color name="primary_color">#667eea</color>
+    <color name="primary_text">#2d3748</color>
+    <color name="secondary_text">#718096</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="button_background">#667eea</color>
+    <color name="loading_overlay_background">#80000000</color>
+    <color name="gradient_accent">#764ba2</color>
+
+    <!-- Role Icon Colors -->
+    <color name="merchant_gradient_start">#FF6B6B</color>
+    <color name="merchant_gradient_end">#FF8E8E</color>
+    <color name="customer_gradient_start">#4ECDC4</color>
+    <color name="customer_gradient_end">#44A08D</color>
+
+    <!-- Selection Indicator -->
+    <color name="selection_indicator">#10b981</color>
+
+    <!-- Modern Dialog Colors - ใช้สีที่มีอยู่แล้วและเพิ่มเติม -->
+    <color name="dialog_primary_color">@color/flutter_blue_500</color>
+    <color name="dialog_primary_variant">@color/flutter_blue_700</color>
+    <color name="dialog_primary_light">@color/flutter_light_blue</color>
+
+    <!-- Dialog Background Colors -->
+    <color name="dialog_background_color">@color/white</color>
+    <color name="dialog_surface_color">@color/background</color>
+    <color name="dialog_input_background">@color/light_gray</color>
+
+    <!-- Dialog Text Colors -->
+    <color name="dialog_primary_text_color">@color/text_primary</color>
+    <color name="dialog_secondary_text_color">@color/text_secondary</color>
+    <color name="dialog_hint_text_color">@color/text_hint</color>
+
+    <!-- Dialog Interactive Colors -->
+    <color name="dialog_stroke_color">@color/divider</color>
+    <color name="dialog_ripple_color">@color/flutter_blue_500</color>
+    <color name="dialog_white_ripple">@color/white</color>
+    <color name="dialog_progress_track_color">@color/flutter_light_blue</color>
+
+    <!-- Dialog Specific Colors -->
+    <color name="dialog_icon_background">#F8FAFC</color>
+    <color name="dialog_button_secondary_bg">#F5F5F5</color>
+    <color name="dialog_shadow">#1A000000</color>
+
+
+
 </resources>

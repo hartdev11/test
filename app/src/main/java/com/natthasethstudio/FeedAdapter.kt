@@ -300,7 +300,7 @@ class FeedAdapter(
         } else {
             holder.btnBoost.setIconTintResource(R.color.text_primary)
             holder.btnBoost.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
-            holder.btnBoost.setIconResource(R.drawable.ic_boost_post)
+            holder.btnBoost.setIconResource(R.drawable.paper_plane)
         }
 
         // อัพเดทพื้นหลังของโพสต์

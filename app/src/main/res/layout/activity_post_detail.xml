@@ -136,7 +136,7 @@
                             android:layout_weight="1"
                             android:text="@string/post_comment"
                             android:textColor="?attr/colorPrimary"
-                            android:drawableStart="@drawable/ic_comment"
+                            android:drawableStart="@drawable/comment_dots"
                             android:drawablePadding="4dp"
                             android:contentDescription="@string/post_comment_button_description"/>
 

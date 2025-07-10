@@ -11,6 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -20,6 +21,12 @@ class RoleSelectionActivity : AppCompatActivity() {
     private lateinit var db: FirebaseFirestore
     private lateinit var progressBar: View
 
+    private var selectedRole: String? = null
+
+    private lateinit var merchantCard: CardView
+    private lateinit var customerCard: CardView
+    private lateinit var continueButton: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_role_selection)
@@ -27,17 +34,51 @@ class RoleSelectionActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
-        val merchantCard = findViewById<CardView>(R.id.merchantCard)
-        val customerCard = findViewById<CardView>(R.id.customerCard)
+        merchantCard = findViewById(R.id.merchantCard)
+        customerCard = findViewById(R.id.customerCard)
         progressBar = findViewById(R.id.progressBar)
+        continueButton = findViewById(R.id.continueButton)
 
         merchantCard.setOnClickListener {
-            showStoreNameDialog()
+            selectedRole = "merchant"
+            updateSelectionUI()
         }
 
         customerCard.setOnClickListener {
-            showNicknameDialog()
+            selectedRole = "customer"
+            updateSelectionUI()
         }
+
+        continueButton.setOnClickListener {
+            if (selectedRole == null) {
+                Toast.makeText(this, "กรุณาเลือกบทบาทก่อนดำเนินการต่อ", Toast.LENGTH_SHORT).show()
+            } else {
+                if (selectedRole == "merchant") {
+                    showStoreNameDialog()
+                } else {
+                    showNicknameDialog()
+                }
+            }
+        }
+
+        updateSelectionUI()
+    }
+
+    private fun updateSelectionUI() {
+        if (selectedRole == "merchant") {
+            merchantCard.setCardBackgroundColor(ContextCompat.getColor(this, R.color.merchant_gradient_start))
+            customerCard.setCardBackgroundColor(ContextCompat.getColor(this, R.color.white))
+        } else if (selectedRole == "customer") {
+            customerCard.setCardBackgroundColor(ContextCompat.getColor(this, R.color.customer_gradient_start))
+            merchantCard.setCardBackgroundColor(ContextCompat.getColor(this, R.color.white))
+        } else {
+            merchantCard.setCardBackgroundColor(ContextCompat.getColor(this, R.color.white))
+            customerCard.setCardBackgroundColor(ContextCompat.getColor(this, R.color.white))
+        }
+
+        // ✅ Enable/Disable continue button based on selection
+        continueButton.isEnabled = selectedRole != null
+        continueButton.alpha = if (selectedRole != null) 1.0f else 0.4f
     }
 
     private fun showStoreNameDialog() {
@@ -102,13 +143,12 @@ class RoleSelectionActivity : AppCompatActivity() {
 
     private fun saveUserRole(role: String, displayName: String) {
         progressBar.visibility = View.VISIBLE
-        
+
         val user = auth.currentUser
         if (user != null) {
-            // ตรวจสอบว่าเป็น Google user หรือไม่ (มี photoUrl และ provider เป็น Google)
-            val isGoogleUser = user.photoUrl != null && 
-                              user.providerData.any { it.providerId == "google.com" }
-            
+            val isGoogleUser = user.photoUrl != null &&
+                    user.providerData.any { it.providerId == "google.com" }
+
             val userData = mapOf(
                 "email" to (user.email ?: ""),
                 "username" to (user.displayName ?: ""),
@@ -133,7 +173,7 @@ class RoleSelectionActivity : AppCompatActivity() {
                             "isStore" to true,
                             "createdAt" to com.google.firebase.Timestamp.now()
                         )
-                        
+
                         db.collection("stores").document(user.uid)
                             .set(storeData)
                             .addOnSuccessListener {
@@ -162,4 +202,4 @@ class RoleSelectionActivity : AppCompatActivity() {
             finish()
         }
     }
-} 
+}
