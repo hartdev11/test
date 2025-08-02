@@ -260,6 +260,9 @@ class CustomerMainActivity : AppCompatActivity() {
         // Reload profile when returning to this activity
         feedAdapter.updateHeaderProfile()
         
+        // Update notification badge when returning to this activity
+        updateNotificationBadge()
+        
         // Sync like status from Firestore to ensure consistency (only if needed)
         // ไม่เรียก syncLikeStatusFromFirestore() ใน onResume เพื่อป้องกันการเด้งไปด้านบน
         
@@ -666,46 +669,44 @@ class CustomerMainActivity : AppCompatActivity() {
 
     private fun sendNotification(recipientId: String?, type: String, postId: String?) {
         if (recipientId == null || currentUserId == null || currentUserId == recipientId) {
+            Log.d("CustomerMainActivity", "Skipping notification: recipientId=$recipientId, currentUserId=$currentUserId, type=$type")
             return // Don't send notification to self or if recipient/sender is null
         }
 
-        // Fetch sender's nickname and avatarId
-        firestore.collection("users").document(currentUserId!!)
-            .get()
-            .addOnSuccessListener { senderDoc ->
-                val senderName = senderDoc.getString("nickname") ?: senderDoc.getString("name") ?: "ไม่พบชื่อ"
-                val senderAvatarId = senderDoc.getLong("avatarId")?.toInt() ?: 0
+        Log.d("CustomerMainActivity", "Creating notification: recipientId=$recipientId, senderId=$currentUserId, type=$type, postId=$postId")
 
-                val notificationMessage = when (type) {
-                    "like" -> "$senderName ได้กดถูกใจโพสต์ของคุณ"
-                    "comment" -> "$senderName ได้แสดงความคิดเห็นในโพสต์ของคุณ"
-                    "follow" -> "$senderName ได้ติดตามคุณ"
-                    else -> "มีการแจ้งเตือนใหม่"
+        val notificationMessage = when (type) {
+            "like" -> "ได้กดถูกใจโพสต์ของคุณ"
+            "comment" -> "ได้แสดงความคิดเห็นในโพสต์ของคุณ"
+            "follow" -> "ได้ติดตามคุณ"
+            else -> "มีการแจ้งเตือนใหม่"
+        }
+
+        val notification = Notification(
+            recipientId = recipientId,
+            senderId = currentUserId!!,
+            senderName = "", // Will be loaded from Firestore in adapter
+            senderAvatarId = 0, // Will be loaded from Firestore in adapter
+            type = type,
+            message = notificationMessage,
+            postId = postId,
+            timestamp = Timestamp.now(),
+            read = false
+        )
+
+        firestore.collection("notifications")
+            .add(notification)
+            .addOnSuccessListener { documentReference ->
+                Log.d("CustomerMainActivity", "Notification sent successfully: ${documentReference.id}")
+                // Update notification badge for the recipient
+                try {
+                    updateNotificationBadge()
+                } catch (e: Exception) {
+                    Log.e("CustomerMainActivity", "Error updating notification badge after sending: ${e.message}")
                 }
-
-                val notification = Notification(
-                    recipientId = recipientId,
-                    senderId = currentUserId!!,
-                    senderName = senderName,
-                    senderAvatarId = senderAvatarId,
-                    type = type,
-                    message = notificationMessage,
-                    postId = postId,
-                    timestamp = Timestamp.now(),
-                    read = false
-                )
-
-                firestore.collection("notifications")
-                    .add(notification)
-                    .addOnSuccessListener { documentReference ->
-                        Log.d("CustomerMainActivity", "Notification sent successfully: ${documentReference.id}")
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("CustomerMainActivity", "Error sending notification: $e")
-                    }
             }
             .addOnFailureListener { e ->
-                Log.e("CustomerMainActivity", "Error fetching sender details for notification: $e")
+                Log.e("CustomerMainActivity", "Error sending notification: $e")
             }
     }
 
@@ -1516,8 +1517,8 @@ class CustomerMainActivity : AppCompatActivity() {
                         .get()
                         .addOnSuccessListener { userDoc ->
                             if (userDoc.exists()) {
-                                val isStore = userDoc.getBoolean("isStore") ?: false
-                                if (isStore) {
+                                val role = userDoc.getString("role") ?: "customer"
+                                if (role == "merchant") {
                                     val intent = Intent(this, StoreProfileActivity::class.java)
                                     intent.putExtra("storeId", userId)
                                     startActivity(intent)
@@ -1633,6 +1634,33 @@ class CustomerMainActivity : AppCompatActivity() {
             .addOnFailureListener { e ->
                 Log.e("CustomerMainActivity", "Error syncing like status: ${e.message}")
             }
+    }
+
+    // Function to update notification badge
+    private fun updateNotificationBadge() {
+        val userId = currentUserId
+        if (userId != null) {
+            try {
+                firestore.collection("notifications")
+                    .whereEqualTo("recipientId", userId)
+                    .whereEqualTo("read", false)
+                    .get()
+                    .addOnSuccessListener { documents ->
+                        val unreadCount = documents.size()
+                        // Update header badge through FeedAdapter
+                        try {
+                            feedAdapter.updateHeaderProfile()
+                        } catch (e: Exception) {
+                            Log.e("CustomerMainActivity", "Error updating header profile: ${e.message}")
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("CustomerMainActivity", "Error updating notification badge: ${e.message}")
+                    }
+            } catch (e: Exception) {
+                Log.e("CustomerMainActivity", "Error in updateNotificationBadge: ${e.message}")
+            }
+        }
     }
 }
 

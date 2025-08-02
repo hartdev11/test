@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chipGroupCategories: ChipGroup
     private lateinit var searchEditText: TextInputEditText
     private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var fabAddMenu: View
 
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
@@ -123,6 +124,11 @@ class MainActivity : AppCompatActivity() {
         setupCheckoutButton()
         setupErrorHandling()
         observeViewModel()
+
+        fabAddMenu.setOnClickListener {
+            val intent = Intent(this, AddMenuActivity::class.java)
+            addMenuLauncher.launch(intent)
+        }
     }
 
     private fun initializeViews() {
@@ -136,6 +142,7 @@ class MainActivity : AppCompatActivity() {
         progressIndicator = findViewById(R.id.progressIndicator)
         errorView = findViewById(R.id.errorView)
         retryButton = findViewById(R.id.retryButton)
+        fabAddMenu = findViewById(R.id.fabAddMenu)
     }
 
     private fun setupRecyclerView() {
@@ -274,6 +281,7 @@ class MainActivity : AppCompatActivity() {
         errorView.visibility = View.GONE
         retryButton.visibility = View.GONE
         rvMenuItems.visibility = View.GONE
+        fabAddMenu.visibility = View.GONE
     }
 
     private fun showError(message: String) {
@@ -281,6 +289,7 @@ class MainActivity : AppCompatActivity() {
         errorView.visibility = View.VISIBLE
         retryButton.visibility = View.VISIBLE
         rvMenuItems.visibility = View.GONE
+        fabAddMenu.visibility = View.GONE
         errorView.text = message
     }
 
@@ -288,7 +297,7 @@ class MainActivity : AppCompatActivity() {
         progressIndicator.visibility = View.GONE
         errorView.visibility = View.GONE
         retryButton.visibility = View.GONE
-        rvMenuItems.visibility = View.VISIBLE
+        fabAddMenu.visibility = View.VISIBLE
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -306,6 +315,8 @@ class MainActivity : AppCompatActivity() {
     private fun observeViewModel() {
         viewModel.menuItems.observe(this, Observer { items ->
             menuAdapter.updateItems(items)
+            // ไม่ต้องแสดง layoutEmptyMenu อีกต่อไป
+            rvMenuItems.visibility = if (items.isNullOrEmpty()) View.GONE else View.VISIBLE
             showContent()
         })
 

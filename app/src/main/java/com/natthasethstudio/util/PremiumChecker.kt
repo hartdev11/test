@@ -27,4 +27,23 @@ object PremiumChecker {
             false
         }
     }
+
+    suspend fun isPremiumMerchant(): Boolean {
+        val userId = auth.currentUser?.uid ?: return false
+        return try {
+            val document = db.collection("premium_stores").document(userId).get().await()
+            document.getBoolean("isPremium") ?: false
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun setPremiumMerchant(isPremium: Boolean) {
+        val userId = auth.currentUser?.uid ?: return
+        val premiumData = hashMapOf(
+            "isPremium" to isPremium,
+            "updatedAt" to System.currentTimeMillis()
+        )
+        db.collection("premium_stores").document(userId).set(premiumData)
+    }
 } 

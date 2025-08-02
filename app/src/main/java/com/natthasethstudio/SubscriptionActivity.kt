@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -13,9 +12,8 @@ import com.natthasethstudio.sethpos.R
 import com.natthasethstudio.sethpos.util.PremiumChecker
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.launch
-import java.util.*
+import android.widget.TextView
 
 class SubscriptionActivity : AppCompatActivity() {
     private lateinit var billingClient: BillingClient
@@ -23,12 +21,13 @@ class SubscriptionActivity : AppCompatActivity() {
     private lateinit var yearlySubscribeButton: Button
     private lateinit var loadingProgressBar: ProgressBar
     private lateinit var errorTextView: TextView
-    private lateinit var monthlyPlanCard: View
-    private lateinit var yearlyPlanCard: View
+    private lateinit var retryButton: Button
 
     // ใช้ product ID ที่แตกต่างจากฝั่งลูกค้า
-    private val monthlyProductId = "store_monthly"
-    private val yearlyProductId = "store_yearly"
+    private val monthlyProductId = "storepremiummonthly69"
+    private val yearlyProductId = "storepremiummonthly690"
+    private lateinit var monthlyProductDetails: ProductDetails
+    private lateinit var yearlyProductDetails: ProductDetails
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,8 +38,13 @@ class SubscriptionActivity : AppCompatActivity() {
         yearlySubscribeButton = findViewById(R.id.yearlySubscribeButton)
         loadingProgressBar = findViewById(R.id.loadingProgressBar)
         errorTextView = findViewById(R.id.errorTextView)
-        monthlyPlanCard = findViewById(R.id.monthlyPlanCard)
-        yearlyPlanCard = findViewById(R.id.yearlyPlanCard)
+        retryButton = findViewById(R.id.retryButton)
+
+        retryButton.setOnClickListener {
+            showError("")
+            showLoading(true)
+            connectToBillingService()
+        }
 
         // Check if store is already premium
         lifecycleScope.launch {
@@ -52,35 +56,34 @@ class SubscriptionActivity : AppCompatActivity() {
             // Initialize billing client
             billingClient = BillingClient.newBuilder(this@SubscriptionActivity)
                 .setListener(purchasesUpdatedListener)
-                .enablePendingPurchases(
-                    PendingPurchasesParams.newBuilder().build()
-                )
+                .enablePendingPurchases()
                 .build()
 
             // Connect to billing service
+            showLoading(true)
             connectToBillingService()
 
             // Set up click listeners
             monthlySubscribeButton.setOnClickListener {
-                subscribeToPremium(monthlyProductId)
+                subscribeToPremium(monthlyProductDetails)
             }
 
             yearlySubscribeButton.setOnClickListener {
-                subscribeToPremium(yearlyProductId)
+                subscribeToPremium(yearlyProductDetails)
             }
         }
     }
 
     private val purchasesUpdatedListener = object : PurchasesUpdatedListener {
         override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
-        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-            for (purchase in purchases) {
-                handlePurchase(purchase)
-            }
-        } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+                for (purchase in purchases) {
+                    handlePurchase(purchase)
+                }
+            } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
                 Toast.makeText(this@SubscriptionActivity, "การสมัครสมาชิกถูกยกเลิก", Toast.LENGTH_SHORT).show()
-        } else {
-            showError("ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง")
+            } else {
+                showError("ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง")
             }
         }
     }
@@ -119,126 +122,81 @@ class SubscriptionActivity : AppCompatActivity() {
             )
             .build()
 
-        billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
-            override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    val productDetailsList = result.productDetailsList
-                    if (!productDetailsList.isNullOrEmpty()) {
-                    updateProductDetails(productDetailsList)
-                } else {
-                    showError("ไม่พบแพ็คเกจที่ต้องการ")
-                }
-            } else {
-                showError("ไม่สามารถดึงข้อมูลแพ็คเกจได้")
-            }
-        }
-        })
-    }
+        // Disable buttons while loading
+        monthlySubscribeButton.isEnabled = false
+        yearlySubscribeButton.isEnabled = false
 
-    private fun updateProductDetails(productDetailsList: List<ProductDetails>) {
-        for (productDetails in productDetailsList) {
-            when (productDetails.productId) {
-                monthlyProductId -> {
-                    monthlySubscribeButton.text = "สมัครสมาชิก ${productDetails.subscriptionOfferDetails?.get(0)?.pricingPhases?.pricingPhaseList?.get(0)?.formattedPrice}/เดือน"
-                }
-                yearlyProductId -> {
-                    yearlySubscribeButton.text = "สมัครสมาชิก ${productDetails.subscriptionOfferDetails?.get(0)?.pricingPhases?.pricingPhaseList?.get(0)?.formattedPrice}/ปี"
-                }
-            }
-        }
-    }
-
-    private fun subscribeToPremium(productId: String) {
-        showLoading(true)
-        val params = QueryProductDetailsParams.newBuilder()
-            .setProductList(
-                listOf(
-                    QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(productId)
-                        .setProductType(BillingClient.ProductType.SUBS)
-                        .build()
-                )
-            )
-            .build()
-
-        billingClient.queryProductDetailsAsync(params, object : ProductDetailsResponseListener {
-            override fun onProductDetailsResponse(billingResult: BillingResult, result: QueryProductDetailsResult) {
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    val productDetailsList = result.productDetailsList
-                    if (!productDetailsList.isNullOrEmpty()) {
-                    val productDetails = productDetailsList[0]
-                        val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
-                        if (!offerToken.isNullOrEmpty()) {
-                        val billingFlowParams = BillingFlowParams.newBuilder()
-                            .setProductDetailsParamsList(
-                                listOf(
-                                    BillingFlowParams.ProductDetailsParams.newBuilder()
-                                        .setProductDetails(productDetails)
-                                        .setOfferToken(offerToken)
-                                        .build()
-                                )
-                            )
-                            .build()
-                            billingClient.launchBillingFlow(this@SubscriptionActivity, billingFlowParams)
-                    } else {
-                        showError("ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง")
+        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && !productDetailsList.isNullOrEmpty()) {
+                errorTextView.visibility = View.GONE
+                retryButton.visibility = View.GONE
+                productDetailsList.forEach { productDetails ->
+                    when (productDetails.productId) {
+                        monthlyProductId -> {
+                            monthlyProductDetails = productDetails
+                            val price = productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice ?: ""
+                            monthlySubscribeButton.text = "สมัครสมาชิกรายเดือน $price/เดือน"
+                            monthlySubscribeButton.isEnabled = true
+                        }
+                        yearlyProductId -> {
+                            yearlyProductDetails = productDetails
+                            val price = productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice ?: ""
+                            yearlySubscribeButton.text = "สมัครสมาชิกรายปี $price/ปี"
+                            yearlySubscribeButton.isEnabled = true
+                        }
                     }
-                } else {
-                    showError("ไม่พบแพ็คเกจที่ต้องการ")
                 }
+                showLoading(false)
             } else {
-                showError("ไม่สามารถดึงข้อมูลแพ็คเกจได้")
+                showError("ไม่พบแพ็กเกจที่ต้องการ กรุณาตรวจสอบการเชื่อมต่อหรือรหัสสินค้า แล้วลองใหม่อีกครั้ง")
             }
-            showLoading(false)
         }
-        })
+    }
+
+    private fun subscribeToPremium(productDetails: ProductDetails) {
+        showLoading(true)
+        val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
+        if (offerToken != null) {
+            val flowParams = BillingFlowParams.newBuilder()
+                .setProductDetailsParamsList(
+                    listOf(
+                        BillingFlowParams.ProductDetailsParams.newBuilder()
+                            .setProductDetails(productDetails)
+                            .setOfferToken(offerToken)
+                            .build()
+                    )
+                )
+                .build()
+            billingClient.launchBillingFlow(this, flowParams)
+        } else {
+            showError("ไม่สามารถดำเนินการสมัครสมาชิกได้ กรุณาลองใหม่อีกครั้ง")
+        }
+        showLoading(false)
     }
 
     private fun handlePurchase(purchase: Purchase) {
-        if (purchase.purchaseState == 1) { // PURCHASED
+        if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
             if (!purchase.isAcknowledged) {
                 val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
                     .setPurchaseToken(purchase.purchaseToken)
                     .build()
-                billingClient.acknowledgePurchase(acknowledgePurchaseParams, object : AcknowledgePurchaseResponseListener {
-                    override fun onAcknowledgePurchaseResponse(billingResult: BillingResult) {
+                billingClient.acknowledgePurchase(acknowledgePurchaseParams) { billingResult ->
                     if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                         updatePremiumStatus(purchase)
                     }
                 }
-                })
             } else {
                 updatePremiumStatus(purchase)
             }
-        } else if (purchase.purchaseState == 2) { // PENDING
+        } else if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
             Toast.makeText(this, "การชำระเงินอยู่ระหว่างดำเนินการ", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun updatePremiumStatus(purchase: Purchase) {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val db = FirebaseFirestore.getInstance()
-        val premiumData = hashMapOf(
-            "isPremium" to true,
-            "subscriptionId" to purchase.products[0],
-            "purchaseToken" to purchase.purchaseToken,
-            "purchaseTime" to purchase.purchaseTime,
-            "autoRenewing" to purchase.isAutoRenewing
-        )
-
-        db.collection("premium_stores").document(userId)
-            .set(premiumData)
-            .addOnSuccessListener(object : com.google.android.gms.tasks.OnSuccessListener<Void> {
-                override fun onSuccess(aVoid: Void?) {
-                showPremiumStatus()
-                    Toast.makeText(this@SubscriptionActivity, "สมัครสมาชิกพรีเมียมสำเร็จ!", Toast.LENGTH_SHORT).show()
-            }
-            })
-            .addOnFailureListener(object : com.google.android.gms.tasks.OnFailureListener {
-                override fun onFailure(e: Exception) {
-                showError("ไม่สามารถอัปเดตสถานะสมาชิกได้")
-            }
-            })
+        PremiumChecker.setPremiumMerchant(true)
+        showPremiumStatus()
+        Toast.makeText(this@SubscriptionActivity, "สมัครสมาชิกพรีเมียมสำเร็จ!", Toast.LENGTH_SHORT).show()
     }
 
     private fun checkSubscriptionStatus() {
@@ -248,9 +206,8 @@ class SubscriptionActivity : AppCompatActivity() {
         db.collection("premium_stores").document(userId)
             .get()
             .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
+                if (document.exists()) {
                     val isPremium = document.getBoolean("isPremium") ?: false
-                    val purchaseTime = document.getLong("purchaseTime") ?: 0
                     val subscriptionId = document.getString("subscriptionId") ?: ""
 
                     if (isPremium && subscriptionId.isNotEmpty()) {
@@ -287,25 +244,37 @@ class SubscriptionActivity : AppCompatActivity() {
     }
 
     private fun showPremiumStatus() {
-        monthlyPlanCard.visibility = View.GONE
-        yearlyPlanCard.visibility = View.GONE
+        monthlySubscribeButton.visibility = View.GONE
+        yearlySubscribeButton.visibility = View.GONE
         Toast.makeText(this, "คุณเป็นสมาชิกพรีเมียมแล้ว!", Toast.LENGTH_SHORT).show()
     }
 
-    private fun showLoading(show: Boolean) {
-        loadingProgressBar.visibility = if (show) View.VISIBLE else View.GONE
-        monthlySubscribeButton.isEnabled = !show
-        yearlySubscribeButton.isEnabled = !show
+    private fun showLoading(isLoading: Boolean) {
+        loadingProgressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        monthlySubscribeButton.isEnabled = !isLoading
+        yearlySubscribeButton.isEnabled = !isLoading
+        retryButton.visibility = View.GONE
+        errorTextView.visibility = View.GONE
     }
 
     private fun showError(message: String) {
+        loadingProgressBar.visibility = View.GONE
         errorTextView.text = message
-        errorTextView.visibility = View.VISIBLE
-        showLoading(false)
+        errorTextView.visibility = if (message.isNotEmpty()) View.VISIBLE else View.GONE
+        retryButton.visibility = if (message.isNotEmpty()) View.VISIBLE else View.GONE
+        monthlySubscribeButton.isEnabled = false
+        yearlySubscribeButton.isEnabled = false
     }
 
     override fun onResume() {
         super.onResume()
         checkSubscriptionStatus()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::billingClient.isInitialized) {
+            billingClient.endConnection()
+        }
     }
 }

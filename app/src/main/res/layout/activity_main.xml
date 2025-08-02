@@ -118,6 +118,17 @@
                 android:background="@drawable/rounded_border"
                 android:contentDescription="รายการเมนูอาหาร" />
 
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabAddMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="24dp"
+                android:contentDescription="เพิ่มเมนูใหม่"
+                android:src="@drawable/ic_add"
+                app:backgroundTint="@color/colorPrimary"
+                app:tint="@android:color/white" />
+
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         <!-- ตะกร้าสินค้า -->
@@ -183,5 +194,7 @@
         </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
+
+    <!-- Floating Action Button for Add Menu -->
 
 </FrameLayout>

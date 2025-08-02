@@ -203,31 +203,48 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     user?.let { user ->
-                        db.collection("users").document(user.uid).get()
-                            .addOnSuccessListener { document ->
-                                if (!document.exists()) {
-                                    progressBar.visibility = View.GONE
-                                    startActivity(Intent(this, RoleSelectionActivity::class.java))
-                                    finish()
-                                } else {
-                                    val role = document.getString("role") ?: "customer"
-                                    if (role == "merchant") {
-                                        startActivity(Intent(this, MainActivity::class.java))
-                                    } else {
-                                        startActivity(Intent(this, CustomerMainActivity::class.java))
+                        // Always update user profile info (including photoUrl) in Firestore
+                        val userData = hashMapOf<String, Any>(
+                            "email" to (user.email ?: ""),
+                            "name" to (user.displayName ?: ""),
+                            "photoUrl" to (user.photoUrl?.toString() ?: ""),
+                            "provider" to (user.providerData.firstOrNull { it.providerId == "google.com" }?.providerId ?: ""),
+                            "lastLogin" to com.google.firebase.Timestamp.now()
+                        )
+                        db.collection("users").document(user.uid)
+                            .set(userData, com.google.firebase.firestore.SetOptions.merge())
+                            .addOnSuccessListener {
+                                // Continue with role check and navigation
+                                db.collection("users").document(user.uid).get()
+                                    .addOnSuccessListener { document ->
+                                        val role = document.getString("role")
+                                        if (!document.exists() || role.isNullOrEmpty()) {
+                                            progressBar.visibility = View.GONE
+                                            startActivity(Intent(this, RoleSelectionActivity::class.java))
+                                            finish()
+                                        } else if (role == "merchant") {
+                                            startActivity(Intent(this, MainActivity::class.java))
+                                            finish()
+                                        } else {
+                                            startActivity(Intent(this, CustomerMainActivity::class.java))
+                                            finish()
+                                        }
                                     }
-                                    finish()
-                                }
+                                    .addOnFailureListener { e ->
+                                        Log.e("LoginActivity", "Error checking user in Firestore: ${e.message}")
+                                        Toast.makeText(this, "Error checking user: ${e.message}", Toast.LENGTH_LONG).show()
+                                        progressBar.visibility = View.GONE
+                                    }
                             }
                             .addOnFailureListener { e ->
-                                Log.e("LoginActivity", "Error checking user in Firestore: ${e.message}")
-                                Toast.makeText(this, "Error checking user: ${e.message}", Toast.LENGTH_LONG).show()
+                                Log.e("LoginActivity", "Error updating user profile: ${e.message}")
+                                Toast.makeText(this, "Error updating user profile: ${e.message}", Toast.LENGTH_LONG).show()
                                 progressBar.visibility = View.GONE
                             }
                     }
                 } else {
                     Log.e("LoginActivity", "Firebase authentication with Google failed", task.exception)
-                    Toast.makeText(this, "Firebase authentication failed: ${task.exception?.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Google Sign-In failed", Toast.LENGTH_LONG).show()
                     progressBar.visibility = View.GONE
                 }
             }

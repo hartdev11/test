@@ -20,33 +20,52 @@ class ProfileBackgroundManager(private val context: Context) {
     
     // รายการพื้นหลังทั้งหมดที่มี animation
     private val backgroundDrawables = listOf(
-        R.drawable.bg_profile_simple_animated,  // พื้นหลังทดสอบ (มี animation)
-        R.drawable.bg_profile_simple,           // พื้นหลังทดสอบ (ไม่มี animation)
-        R.drawable.bg_profile_paris,           // ปารีส
-        R.drawable.bg_profile_tokyo,           // โตเกียว
-        R.drawable.bg_profile_santorini,       // ซานโตรินี
-        R.drawable.bg_profile_swiss,           // สวิตเซอร์แลนด์
-        R.drawable.bg_profile_venice           // เวนิส
+        R.drawable.bg_profile_mountain_animated, // ภูเขา
+        R.drawable.bg_profile_city_animated,     // เมือง
+        R.drawable.bg_profile_sea_animated       // ทะเล
     )
     
     /**
      * รับพื้นหลังสำหรับผู้ใช้ (สุ่มหรือใช้ที่มีอยู่แล้ว)
      */
     fun getBackgroundForUser(userId: String): Drawable? {
-        val savedUserId = prefs.getString(KEY_USER_ID, null)
-        val savedBackgroundId = prefs.getInt(KEY_BACKGROUND_ID, -1)
-        
-        // ถ้าเป็นผู้ใช้ใหม่หรือเปลี่ยนผู้ใช้ ให้สุ่มพื้นหลังใหม่
-        if (savedUserId != userId || savedBackgroundId == -1) {
-            val randomBackgroundId = backgroundDrawables.random()
-            saveBackgroundForUser(userId, randomBackgroundId)
-            Log.d("ProfileBackgroundManager", "สุ่มพื้นหลังใหม่: $randomBackgroundId")
-            return ContextCompat.getDrawable(context, randomBackgroundId)
+        try {
+            val savedUserId = prefs.getString(KEY_USER_ID, null)
+            val savedBackgroundId = prefs.getInt(KEY_BACKGROUND_ID, -1)
+            
+            // ถ้าเป็นผู้ใช้ใหม่หรือเปลี่ยนผู้ใช้ ให้สุ่มพื้นหลังใหม่
+            if (savedUserId != userId || savedBackgroundId == -1) {
+                val randomBackgroundId = backgroundDrawables.random()
+                saveBackgroundForUser(userId, randomBackgroundId)
+                Log.d("ProfileBackgroundManager", "สุ่มพื้นหลังใหม่: $randomBackgroundId")
+                return try {
+                    ContextCompat.getDrawable(context, randomBackgroundId)
+                } catch (e: Exception) {
+                    Log.e("ProfileBackgroundManager", "Error loading random background: "+e.message)
+                    // Fallback to mountain background
+                    ContextCompat.getDrawable(context, R.drawable.bg_profile_mountain_animated)
+                }
+            }
+            
+            // ใช้พื้นหลังที่มีอยู่แล้ว
+            Log.d("ProfileBackgroundManager", "ใช้พื้นหลังเดิม: $savedBackgroundId")
+            return try {
+                ContextCompat.getDrawable(context, savedBackgroundId)
+            } catch (e: Exception) {
+                Log.e("ProfileBackgroundManager", "Error loading saved background: ${e.message}")
+                // Fallback to mountain background
+                ContextCompat.getDrawable(context, R.drawable.bg_profile_mountain_animated)
+            }
+        } catch (e: Exception) {
+            Log.e("ProfileBackgroundManager", "Error in getBackgroundForUser: ${e.message}")
+            // Ultimate fallback
+            return try {
+                ContextCompat.getDrawable(context, R.drawable.bg_profile_mountain_animated)
+            } catch (e2: Exception) {
+                Log.e("ProfileBackgroundManager", "Error loading fallback background: ${e2.message}")
+                null
+            }
         }
-        
-        // ใช้พื้นหลังที่มีอยู่แล้ว
-        Log.d("ProfileBackgroundManager", "ใช้พื้นหลังเดิม: $savedBackgroundId")
-        return ContextCompat.getDrawable(context, savedBackgroundId)
     }
     
     /**
@@ -64,13 +83,30 @@ class ProfileBackgroundManager(private val context: Context) {
      * เปลี่ยนพื้นหลังใหม่ (สุ่มใหม่)
      */
     fun changeBackground(userId: String): Drawable? {
-        Log.d("ProfileBackgroundManager", "เปลี่ยนพื้นหลังสำหรับ User: $userId")
-        val randomBackgroundId = backgroundDrawables.random()
-        Log.d("ProfileBackgroundManager", "สุ่มได้ Background ID: $randomBackgroundId")
-        saveBackgroundForUser(userId, randomBackgroundId)
-        val drawable = ContextCompat.getDrawable(context, randomBackgroundId)
-        Log.d("ProfileBackgroundManager", "ได้ Drawable: ${drawable != null}")
-        return drawable
+        try {
+            Log.d("ProfileBackgroundManager", "เปลี่ยนพื้นหลังสำหรับ User: $userId")
+            val randomBackgroundId = backgroundDrawables.random()
+            Log.d("ProfileBackgroundManager", "สุ่มได้ Background ID: $randomBackgroundId")
+            saveBackgroundForUser(userId, randomBackgroundId)
+            val drawable = try {
+                ContextCompat.getDrawable(context, randomBackgroundId)
+            } catch (e: Exception) {
+                Log.e("ProfileBackgroundManager", "Error loading new background: ${e.message}")
+                // Fallback to mountain background
+                ContextCompat.getDrawable(context, R.drawable.bg_profile_mountain_animated)
+            }
+            Log.d("ProfileBackgroundManager", "ได้ Drawable: ${drawable != null}")
+            return drawable
+        } catch (e: Exception) {
+            Log.e("ProfileBackgroundManager", "Error in changeBackground: ${e.message}")
+            // Ultimate fallback
+            return try {
+                ContextCompat.getDrawable(context, R.drawable.bg_profile_mountain_animated)
+            } catch (e2: Exception) {
+                Log.e("ProfileBackgroundManager", "Error loading fallback background: ${e2.message}")
+                null
+            }
+        }
     }
     
     /**

@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.natthasethstudio.sethpos.SethPOSApplication
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -232,18 +233,22 @@ class CommentActivity : AppCompatActivity() {
     }
 
     private fun createCommentNotification(postId: String, commenterId: String, commenterName: String, commenterAvatarId: Int) {
+        Log.d("CommentActivity", "Creating comment notification: postId=$postId, commenterId=$commenterId")
+        
         // Get post owner ID
         firestore.collection("posts").document(postId).get()
             .addOnSuccessListener { postDoc ->
                 val postOwnerId = postDoc.getString("userId")
+                Log.d("CommentActivity", "Post owner ID: $postOwnerId, commenter ID: $commenterId")
+                
                 if (postOwnerId != null && postOwnerId != commenterId) {
                     val notification = com.natthasethstudio.sethpos.model.Notification(
                         recipientId = postOwnerId,
                         senderId = commenterId,
-                        senderName = commenterName,
-                        senderAvatarId = commenterAvatarId,
+                        senderName = "", // Will be loaded from Firestore in adapter
+                        senderAvatarId = 0, // Will be loaded from Firestore in adapter
                         type = "comment",
-                        message = "$commenterName ได้แสดงความคิดเห็นในโพสต์ของคุณ",
+                        message = "ได้แสดงความคิดเห็นในโพสต์ของคุณ",
                         postId = postId,
                         timestamp = com.google.firebase.Timestamp.now(),
                         read = false
@@ -251,10 +256,30 @@ class CommentActivity : AppCompatActivity() {
                     
                     firestore.collection("notifications")
                         .add(notification)
+                        .addOnSuccessListener { documentReference ->
+                            Log.d("CommentActivity", "Comment notification sent successfully: ${documentReference.id}")
+                            // Update notification badge
+                            updateNotificationBadge()
+                        }
                         .addOnFailureListener { e ->
                             Log.w("CommentActivity", "Error creating notification: ", e)
                         }
+                } else {
+                    Log.d("CommentActivity", "Skipping notification: postOwnerId=$postOwnerId, commenterId=$commenterId")
                 }
             }
+            .addOnFailureListener { e ->
+                Log.e("CommentActivity", "Error getting post owner: ", e)
+            }
+    }
+
+    private fun updateNotificationBadge() {
+        // Update notification badge by refreshing the main activity
+        try {
+            val mainActivity = (application as? SethPOSApplication)?.feedAdapter
+            mainActivity?.updateHeaderProfile()
+        } catch (e: Exception) {
+            Log.e("CommentActivity", "Error updating notification badge: ${e.message}")
+        }
     }
 }

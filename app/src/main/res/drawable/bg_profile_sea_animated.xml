@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="400dp"
+            android:height="200dp"
+            android:viewportWidth="400"
+            android:viewportHeight="200">
+            <!-- ท้องฟ้า -->
+            <path android:fillColor="#B3E5FC" android:pathData="M0,0 L400,0 L400,200 L0,200 Z"/>
+            <!-- กลุ่มทะเล (parallax ช้า) -->
+            <group android:name="seaGroup" android:translateX="0">
+                <path android:fillColor="#0288D1" android:pathData="M0,180 Q100,160 200,180 Q300,200 400,180 L400,200 L0,200 Z"/>
+            </group>
+            <!-- กลุ่มเรือ (parallax กลาง) -->
+            <group android:name="boatGroup" android:translateX="0">
+                <path android:fillColor="#FFB300" android:pathData="M120,170 L140,170 L130,180 Z"/>
+                <path android:fillColor="#8D6E63" android:pathData="M125,170 L135,170 L130,165 Z"/>
+            </group>
+            <!-- กลุ่มเมฆ (parallax เร็ว) -->
+            <group android:name="cloudGroup" android:translateX="0">
+                <path android:fillColor="#FFFFFF" android:pathData="M80,40 a10,10 0 1,1 20,0 a10,10 0 1,1 -20,0"/>
+                <path android:fillColor="#FFFFFF" android:pathData="M300,30 a12,12 0 1,1 24,0 a12,12 0 1,1 -24,0"/>
+            </group>
+            <!-- ดวงอาทิตย์ -->
+            <path android:fillColor="#FFD600" android:pathData="M350,50 a20,20 0 1,1 40,0 a20,20 0 1,1 -40,0"/>
+        </vector>
+    </aapt:attr>
+    <target android:name="seaGroup" android:animation="@animator/sea_pan_animator" />
+    <target android:name="boatGroup" android:animation="@animator/boat_pan_animator" />
+    <target android:name="cloudGroup" android:animation="@animator/cloud_pan_animator" />
+</animated-vector> 

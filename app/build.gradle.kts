@@ -15,8 +15,8 @@ android {
         applicationId = "com.natthasethstudio.sethpos"
         minSdk = 24
         targetSdk = 35
-        versionCode = 6
-        versionName = "2.2"
+        versionCode = 9
+        versionName = "2.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -90,7 +90,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-tasks:18.2.0")
 
     // Google Play Billing Library
-    implementation("com.android.billingclient:billing:8.0.0")
+    implementation("com.android.billingclient:billing:7.1.0")
 
     // ZXing for QR code generation
     implementation("com.google.zxing:core:3.5.2")

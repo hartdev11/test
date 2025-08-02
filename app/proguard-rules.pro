@@ -56,3 +56,17 @@
 
 # ปกป้องคลาสภายในแอปของคุณเองไม่ให้ชื่อถูก obfuscate
 -keep class com.natthasethstudio.sethpos.** { *; }
+
+# ปกป้อง model ที่ serialize/deserialize ด้วย Gson (เช่น PrinterConnection)
+-keep class com.natthasethstudio.model.** { *; }
+
+# ปกป้องทุก class/field ในโปรเจกต์นี้ (กันปัญหา Gson/proguard)
+-keep class com.natthasethstudio.** { *; }
+
+# ปกป้อง Gson library
+-keep class com.google.gson.** { *; }
+-dontwarn com.google.gson.**
+
+# ปกป้อง dantsu escpos thermal printer library
+-keep class com.dantsu.escpos.** { *; }
+-dontwarn com.dantsu.escpos.**

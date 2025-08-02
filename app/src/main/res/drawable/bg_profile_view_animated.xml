@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="400dp"
+            android:height="200dp"
+            android:viewportWidth="400"
+            android:viewportHeight="200">
+
+            <!-- กลุ่มวิว (เลื่อนซ้าย-ขวา) -->
+            <group
+                android:name="sceneGroup"
+                android:translateX="0">
+                <!-- ทุ่งหญ้า -->
+                <path
+                    android:fillColor="#A8E063"
+                    android:pathData="M0,180 L400,180 L400,200 L0,200 Z"/>
+                <!-- ภูเขา -->
+                <path
+                    android:fillColor="#8ED6FF"
+                    android:pathData="M0,180 L80,100 L160,180 Z"/>
+                <path
+                    android:fillColor="#8ED6FF"
+                    android:pathData="M120,180 L200,120 L280,180 Z"/>
+                <path
+                    android:fillColor="#8ED6FF"
+                    android:pathData="M240,180 L320,110 L400,180 Z"/>
+                <!-- ถนน -->
+                <path
+                    android:fillColor="#CCCCCC"
+                    android:pathData="M0,200 L400,200 L400,190 L0,190 Z"/>
+                <!-- ต้นไม้ -->
+                <path
+                    android:fillColor="#388E3C"
+                    android:pathData="M60,170 L70,150 L80,170 Z"/>
+                <path
+                    android:fillColor="#388E3C"
+                    android:pathData="M300,170 L310,150 L320,170 Z"/>
+            </group>
+
+            <!-- กลุ่มเมฆ (ลอย) -->
+            <group
+                android:name="cloudGroup"
+                android:translateX="0">
+                <path
+                    android:fillColor="#FFFFFF"
+                    android:pathData="M60,40 a10,10 0 1,1 20,0 a10,10 0 1,1 -20,0"/>
+                <path
+                    android:fillColor="#FFFFFF"
+                    android:pathData="M200,30 a12,12 0 1,1 24,0 a12,12 0 1,1 -24,0"/>
+            </group>
+
+            <!-- ดวงอาทิตย์ -->
+            <path
+                android:fillColor="#FFD600"
+                android:pathData="M350,50 a20,20 0 1,1 40,0 a20,20 0 1,1 -40,0"/>
+        </vector>
+    </aapt:attr>
+    <!-- Animate sceneGroup ให้เลื่อนซ้าย-ขวา (parallax) -->
+    <target
+        android:name="sceneGroup"
+        android:animation="@animator/scene_pan_animator" />
+    <!-- Animate cloudGroup ให้เมฆลอย -->
+    <target
+        android:name="cloudGroup"
+        android:animation="@animator/cloud_pan_animator" />
+</animated-vector> 

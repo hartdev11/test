@@ -1,294 +1,145 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
     android:background="@color/white">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <TextView
+        android:id="@+id/statusTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
-        android:elevation="0dp">
-
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/white"
-            app:navigationIcon="@drawable/ic_back"
-            app:title="อัพเกรดเป็นร้านค้าพรีเมียม"
-            app:titleTextColor="@color/black"
-            app:titleTextAppearance="@style/TextAppearance.AppCompat.Medium" />
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <!-- Header Section -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="เลือกแพ็กเกจที่เหมาะกับร้านค้าของคุณ"
-                android:textAlignment="center"
-                android:textColor="@color/black"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="อัพเกรดเป็นร้านค้าพรีเมียมเพื่อรับสิทธิประโยชน์มากมาย"
-                android:textAlignment="center"
-                android:textColor="@color/gray"
-                android:textSize="14sp"
-                android:layout_marginBottom="24dp"/>
-
-            <!-- Monthly Plan Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/monthlyPlanCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="แพ็กเกจรายเดือน"
-                        android:textColor="@color/black"
-                        android:textSize="18sp"
-                        android:textStyle="bold"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/subscription_monthly_price"
-                        android:textColor="@color/colorPrimary"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/subscription_monthly_period"
-                        android:textColor="@color/gray"
-                        android:textSize="14sp"
-                        android:layout_marginTop="4dp"
-                        android:layout_marginBottom="16dp"/>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="• จัดการสินค้าไม่จำกัด\n• รายงานยอดขายแบบละเอียด\n• ส่งการแจ้งเตือนให้ลูกค้า\n• ระบบสมาชิกและสะสมแต้ม\n• สนับสนุนลูกค้าตลอด 24 ชม."
-                        android:textColor="@color/black"
-                        android:textSize="14sp"
-                        android:lineSpacingExtra="4dp"
-                        android:layout_marginBottom="16dp"/>
-
-                    <Button
-                        android:id="@+id/monthlySubscribeButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/subscription_monthly_button"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="16dp"/>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <!-- Yearly Plan Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/yearlyPlanCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="แพ็กเกจรายปี"
-                            android:textColor="@color/black"
-                            android:textSize="18sp"
-                            android:textStyle="bold"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/subscription_yearly_save"
-                            android:textColor="@color/white"
-                            android:background="@drawable/save_badge_bg"
-                            android:paddingStart="8dp"
-                            android:paddingEnd="8dp"
-                            android:paddingTop="4dp"
-                            android:paddingBottom="4dp"
-                            android:layout_marginStart="8dp" />
-
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/subscription_yearly_price"
-                        android:textColor="@color/colorPrimary"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="8dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/subscription_yearly_period"
-                        android:textColor="@color/gray"
-                        android:textSize="14sp"
-                        android:layout_marginTop="4dp"
-                        android:layout_marginBottom="16dp"/>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="• สิทธิประโยชน์เหมือนแพ็กเกจรายเดือน\n• ประหยัด 20% เมื่อสมัครรายปี\n• รับส่วนลดพิเศษสำหรับลูกค้า\n• ฟรีการอัปเดตฟีเจอร์ใหม่\n• สนับสนุนลูกค้าตลอด 24 ชม."
-                        android:textColor="@color/black"
-                        android:textSize="14sp"
-                        android:lineSpacingExtra="4dp"
-                        android:layout_marginBottom="16dp"/>
-
-                    <Button
-                        android:id="@+id/yearlySubscribeButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/subscription_yearly_button"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="16dp"/>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <!-- Features Section -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="สิทธิประโยชน์เพิ่มเติม"
-                android:textAlignment="center"
-                android:textColor="@color/black"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="16dp"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_features"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="• จัดการสินค้าไม่จำกัด\n• รายงานยอดขายแบบละเอียด\n• ส่งการแจ้งเตือนให้ลูกค้า\n• ระบบสมาชิกและสะสมแต้ม\n• สนับสนุนลูกค้าตลอด 24 ชม."
-                    android:textColor="@color/black"
-                    android:textSize="14sp"
-                    android:lineSpacingExtra="4dp"/>
-
-            </LinearLayout>
-
-            <!-- Terms and Privacy -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="การสมัครสมาชิกจะต่ออายุอัตโนมัติ สามารถยกเลิกได้ทุกเมื่อ"
-                android:textAlignment="center"
-                android:textColor="@color/gray"
-                android:textSize="12sp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
-
-                <TextView
-                    android:id="@+id/privacyPolicyLink"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="นโยบายความเป็นส่วนตัว"
-                    android:textColor="@color/colorPrimary"
-                    android:textSize="12sp"
-                    android:padding="8dp"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="•"
-                    android:textColor="@color/gray"
-                    android:textSize="12sp"/>
-
-                <TextView
-                    android:id="@+id/termsOfServiceLink"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="เงื่อนไขการใช้งาน"
-                    android:textColor="@color/colorPrimary"
-                    android:textSize="12sp"
-                    android:padding="8dp"/>
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
+        android:text="เลือกแพ็คเกจสมาชิก"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="32dp"
+        android:textColor="@color/black" />
 
     <ProgressBar
         android:id="@+id/loadingProgressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/errorTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/retryButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="ลองใหม่"
+        android:background="@drawable/primary_button_background"
+        android:textColor="@color/white"
+        android:visibility="gone"
         android:layout_gravity="center"
-        android:textColor="@color/error"
-        android:textSize="16sp"
-        android:visibility="gone"/>
+        android:layout_marginBottom="16dp" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout> 
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/white">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="แพ็คเกจรายเดือน"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• สิทธิ์การใช้งานเต็มรูปแบบ\n• รองรับลูกค้าไม่จำกัด\n• ฟีเจอร์พิเศษทั้งหมด"
+                android:textSize="14sp"
+                android:textColor="@color/black"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/monthlySubscribeButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="สมัครสมาชิกรายเดือน"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:background="@drawable/primary_button_background"
+                android:textColor="@color/white"
+                android:padding="14dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/white">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="แพ็คเกจรายปี"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• ประหยัดกว่า 20%\n• สิทธิ์การใช้งานเต็มรูปแบบ\n• รองรับลูกค้าไม่จำกัด\n• ฟีเจอร์พิเศษทั้งหมด"
+                android:textSize="14sp"
+                android:textColor="@color/black"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/yearlySubscribeButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="สมัครสมาชิกรายปี"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:background="@drawable/primary_button_background"
+                android:textColor="@color/white"
+                android:padding="14dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout> 

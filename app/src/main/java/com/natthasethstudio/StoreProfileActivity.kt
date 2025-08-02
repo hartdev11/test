@@ -40,7 +40,7 @@ class StoreProfileActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private val storage = FirebaseStorage.getInstance()
-    
+
     private var storeId: String? = null
 
     private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -55,11 +55,11 @@ class StoreProfileActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // เพิ่มการตั้งค่า OpenGL
         window.setBackgroundDrawableResource(android.R.color.transparent)
         window.decorView.setBackgroundColor(getColor(android.R.color.transparent))
-        
+
         setContentView(R.layout.activity_store_profile)
 
         // รับ storeId จาก intent
@@ -89,7 +89,7 @@ class StoreProfileActivity : AppCompatActivity() {
         storeNameText = findViewById(R.id.storeNameText)
         storeEmailText = findViewById(R.id.storeEmailText)
         animatedWaveBackground = findViewById(R.id.animatedWaveBackground)
-        
+
         // Start animated wave background
         startWaveAnimation()
     }
@@ -100,8 +100,8 @@ class StoreProfileActivity : AppCompatActivity() {
         }
 
         //inventoryButton.setOnClickListener {
-            // TODO: Navigate to inventory screen
-            //Toast.makeText(this, "ไปยังหน้าคลังสินค้า", Toast.LENGTH_SHORT).show()
+        // TODO: Navigate to inventory screen
+        //Toast.makeText(this, "ไปยังหน้าคลังสินค้า", Toast.LENGTH_SHORT).show()
         //}
 
         postsButton.setOnClickListener {
@@ -122,7 +122,7 @@ class StoreProfileActivity : AppCompatActivity() {
         saveChangesButton.setOnClickListener {
             saveChanges()
         }
-        
+
         // Setup animated animals switch
         findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switchAnimatedAnimals)?.setOnCheckedChangeListener { _, isChecked ->
             com.natthasethstudio.sethpos.util.SettingsManager.setAnimatedAnimalsEnabled(this, isChecked)
@@ -141,7 +141,7 @@ class StoreProfileActivity : AppCompatActivity() {
 
             // ใช้ storeId แทน currentUser.uid
             val targetStoreId = storeId ?: currentUser.uid
-            
+
             // Load store data from Firestore
             db.collection("stores").document(targetStoreId)
                 .get()
@@ -150,7 +150,7 @@ class StoreProfileActivity : AppCompatActivity() {
                         // Load store name
                         val storeName = document.getString("storeName")
                         storeNameText.text = storeName ?: "ชื่อร้านค้า"
-                        
+
                         // Load store image URL from Firestore
                         val storeImageUrl = document.getString("storeImage")
                         if (!storeImageUrl.isNullOrEmpty()) {
@@ -212,7 +212,7 @@ class StoreProfileActivity : AppCompatActivity() {
 
     private fun uploadImageToFirebase(imageUri: Uri) {
         val currentUser = auth.currentUser ?: return
-        
+
         // ตรวจสอบประเภทไฟล์
         val mimeType = contentResolver.getType(imageUri)
         if (mimeType == null || !mimeType.startsWith("image/")) {
@@ -229,10 +229,10 @@ class StoreProfileActivity : AppCompatActivity() {
         }
 
         val storeRef = storage.reference.child("store_images/${currentUser.uid}")
-        
+
         // Show loading state
         storeImage.setImageResource(R.drawable.store_placeholder)
-        
+
         storeRef.putFile(imageUri)
             .addOnSuccessListener {
                 // Get download URL after successful upload
@@ -275,7 +275,7 @@ class StoreProfileActivity : AppCompatActivity() {
             // Re-authenticate user before updating email
             val credential = com.google.firebase.auth.EmailAuthProvider
                 .getCredential(currentUser.email!!, password)
-            
+
             currentUser.reauthenticate(credential)
                 .addOnSuccessListener {
                     // After successful re-authentication, update email
@@ -301,26 +301,26 @@ class StoreProfileActivity : AppCompatActivity() {
 
     private fun updateFirestore(updates: Map<String, Any>) {
         val currentUser = auth.currentUser ?: return
-        
+
         // Update both users and stores collections
         val batch = db.batch()
-        
+
         // Update users collection
         val userRef = db.collection("users").document(currentUser.uid)
         batch.update(userRef, updates)
-        
+
         // Update stores collection
         val storeRef = db.collection("stores").document(currentUser.uid)
         batch.update(storeRef, updates)
-        
+
         // Commit the batch
         batch.commit()
-                .addOnSuccessListener {
+            .addOnSuccessListener {
                 Toast.makeText(this, "บันทึกการเปลี่ยนแปลงสำเร็จ", Toast.LENGTH_SHORT).show()
-                }
-                .addOnFailureListener { e ->
+            }
+            .addOnFailureListener { e ->
                 Toast.makeText(this, "บันทึกการเปลี่ยนแปลงไม่สำเร็จ: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
+            }
     }
 
     private fun updateStoreVerification() {
@@ -354,15 +354,15 @@ class StoreProfileActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { documents ->
                 val storeUpdates = mutableListOf<Task<Void>>()
-                
+
                 for (document in documents) {
                     val storeRef = db.collection("stores").document(document.id)
                     val userRef = db.collection("users").document(document.id)
-                    
+
                     // สร้าง batch สำหรับแต่ละ store
                     val batch = db.batch()
                     batch.update(storeRef, "isStore", true)
-                    
+
                     // ตรวจสอบและอัพเดทข้อมูลในคอลเลกชัน users
                     val userUpdateTask = userRef.get()
                         .continueWithTask { task ->
@@ -385,10 +385,10 @@ class StoreProfileActivity : AppCompatActivity() {
                                 throw task.exception ?: Exception("Unknown error")
                             }
                         }
-                    
+
                     storeUpdates.add(userUpdateTask)
                 }
-                
+
                 // รอให้ทุกการอัพเดทเสร็จสิ้น
                 Tasks.whenAll(storeUpdates)
                     .addOnSuccessListener {

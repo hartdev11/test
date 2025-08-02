@@ -10,6 +10,7 @@ import com.bumptech.glide.Glide
 import com.natthasethstudio.sethpos.R
 import com.natthasethstudio.sethpos.model.MenuDataItem
 import com.google.android.material.button.MaterialButton
+import android.widget.ImageButton
 
 class MenuAdapter(
     private var items: MutableList<MenuDataItem>,
@@ -20,7 +21,7 @@ class MenuAdapter(
         val nameText: TextView = view.findViewById(R.id.tvItemName)
         val priceText: TextView = view.findViewById(R.id.tvItemPrice)
         val imageView: ImageView = view.findViewById(R.id.ivItemImage)
-        val addToCartButton: MaterialButton = view.findViewById(R.id.btnAddToCart)
+        val addToCartButton: ImageButton = view.findViewById(R.id.btnAddToCart)
         val categoryText: TextView = view.findViewById(R.id.tvItemCategory)
     }
 
@@ -33,10 +34,9 @@ class MenuAdapter(
     override fun onBindViewHolder(holder: MenuViewHolder, position: Int) {
         val item = items[position]
         holder.nameText.text = item.name
-        // ใช้ string resource พร้อม placeholder
+        holder.categoryText.text = item.category
         holder.priceText.text = holder.itemView.context.getString(R.string.price_format, item.price)
-        holder.categoryText.text = holder.itemView.context.getString(R.string.price_format, item.price)
-        
+        holder.priceText.visibility = android.view.View.VISIBLE
         // โหลดรูปภาพด้วย Glide
         if (!item.imageUrl.isNullOrEmpty()) {
             Glide.with(holder.itemView.context)
@@ -48,7 +48,6 @@ class MenuAdapter(
         } else {
             holder.imageView.setImageResource(R.drawable.ic_add_image)
         }
-
         holder.addToCartButton.setOnClickListener { onItemClick(item) }
     }
 

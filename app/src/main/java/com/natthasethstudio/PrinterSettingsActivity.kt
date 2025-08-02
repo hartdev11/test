@@ -167,10 +167,8 @@ class PrinterSettingsActivity : AppCompatActivity() {
         val scanButton = dialogView.findViewById<Button>(R.id.btnScanNetwork)
         val btnSelectLogo = dialogView.findViewById<Button>(R.id.btnSelectLogo)
         val imgLogoPreview = dialogView.findViewById<ImageView>(R.id.imgLogoPreview)
+        val btnRawTestPrint = dialogView.findViewById<Button>(R.id.btnRawTestPrint)
         currentLogoPreview = imgLogoPreview
-        // เพิ่มปุ่มทดสอบพิมพ์ RAW
-        val rawTestButton = Button(this).apply { text = "ทดสอบพิมพ์ RAW" }
-        (dialogView as? android.widget.LinearLayout)?.addView(rawTestButton)
 
         // Setup Connection Type Dropdown
         val connectionTypes = arrayOf("Bluetooth", "Network", "Ethernet")
@@ -186,7 +184,7 @@ class PrinterSettingsActivity : AppCompatActivity() {
             scanIpRangeForPrinters(printerAddressEt, printerPortEt)
         }
 
-        rawTestButton.setOnClickListener {
+        btnRawTestPrint.setOnClickListener {
             val address = printerAddressEt.text.toString().trim()
             val port = printerPortEt.text.toString().toIntOrNull() ?: 9100
             if (address.isBlank()) {
@@ -343,6 +341,8 @@ class PrinterSettingsActivity : AppCompatActivity() {
                 @Suppress("DEPRECATION")
                 addressEt.setText(selectedPrinter.host.hostAddress)
                 portEt.setText(selectedPrinter.port.toString())
+                addressEt.invalidate()
+                portEt.invalidate()
                 stopNetworkDiscovery()
                 dialog.dismiss()
             }
@@ -406,6 +406,8 @@ class PrinterSettingsActivity : AppCompatActivity() {
                 val selectedIp = ipList[which]
                 addressEt.setText(selectedIp)
                 portEt.setText(port.toString())
+                addressEt.invalidate()
+                portEt.invalidate()
                 dialog.dismiss()
             }
             .setNegativeButton("ยกเลิก", null)

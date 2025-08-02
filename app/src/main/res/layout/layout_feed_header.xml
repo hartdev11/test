@@ -141,13 +141,33 @@
                     android:visibility="gone" />
             </LinearLayout>
 
-            <ImageButton
-                android:id="@+id/btnNotifications"
+            <FrameLayout
                 android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="การแจ้งเตือน"
-                android:src="@drawable/ic_notifications" />
+                android:layout_height="48dp">
+
+                <ImageButton
+                    android:id="@+id/btnNotifications"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="การแจ้งเตือน"
+                    android:src="@drawable/ic_notifications" />
+
+                <TextView
+                    android:id="@+id/notificationBadge"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/notification_badge"
+                    android:gravity="center"
+                    android:textColor="@android:color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            </FrameLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
